@@ -6,8 +6,8 @@
 Filter your crafting station items
 ]]
 ------------------------------------------------------------------
---- 1) Feature: 2019-07-18, Baertram
----    Add button to switch between filtered items at research dialog too
+--- 2) Error: 2019-10-20, Baertram
+---    Research dialog popup: CHange between bank, bag or both does nto change the icon nor filters it correctly!
 ------------------------------------------------------------------
 FCOCF = {}
 local FCOCF = FCOCF
@@ -19,8 +19,8 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.10 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.3.1' -- version shown in the settings panel
-FCOCF.addonVars.addonVersionOptionsNumber 	= 0.31
+FCOCF.addonVars.addonVersionOptions 		= '0.3.4' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptionsNumber 	= 0.34
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
 FCOCF.addonVars.gAddonLoaded				= false
@@ -248,7 +248,7 @@ local function BuildAddonMenu()
         },
     }
     -- END OF OPTIONS TABLE
-    LAM:RegisterOptionControls(addonVars.gAddonName, optionsTable)
+    LAM:RegisterOptionControls(addonVars.gAddonName .. "_LAMPanel", optionsTable)
 
 end
 
@@ -333,6 +333,20 @@ end
 --==============================================================================
 --============================== END SETTINGS ==================================
 --==============================================================================
+--Move the research timer icon and the currently available research slots label to the right
+local function reanchorResearchControls()
+    local zoVars = FCOCF.zoVars
+    local numResearchingLabel = zoVars.CRAFTSTATION_SMITHING_RESEARCH_NUM_RESEARCH_LABEL
+    local timerIcon = zoVars.CRAFTSTATION_SMITHING_RESEARCH_TIMER_ICON
+    if numResearchingLabel then
+        numResearchingLabel:ClearAnchors()
+        numResearchingLabel:SetAnchor(TOPLEFT, NIL, NIL, 75, 18)
+    end
+    if timerIcon then
+        timerIcon:ClearAnchors()
+        timerIcon:SetAnchor(RIGHT, numResearchingLabel, LEFT, -2, 0)
+    end
+end
 
 --Check if the ResearchListDialog is shown
 local function isResearchListDialogShown()
@@ -374,7 +388,7 @@ end
 local function RefreshListDialog(rebuildItems, filterPanelId)
     rebuildItems = rebuildItems or false
     filterPanelId = filterPanelId or FCOCF.locVars.gLastPanel
-    --d("RefreshListDialog - rebuildItems: " .. tostring(rebuildItems) .. ", filterPanelId: " .. tostring(filterPanelId))
+--d("RefreshListDialog - rebuildItems: " .. tostring(rebuildItems) .. ", filterPanelId: " .. tostring(filterPanelId) .. ", ListDialogHidden: " ..tostring(FCOCF.zoVars.LIST_DIALOG_LIST:IsHidden()))
     local refreshListDialogNow = false
     if not FCOCF.zoVars.LIST_DIALOG_LIST:IsHidden() then
         --Rebuild the whole ZO_ListDialog1List ?
@@ -401,7 +415,7 @@ local function FCOCraftFilter_UpdateInventory(invType)
     libFilters:RequestUpdate(invType)
     --Is a dialog shown? Then refresh teh visible entries now
     if not FCOCF.zoVars.LIST_DIALOG:IsHidden() then
-        RefreshListDialog(false, nil)
+        RefreshListDialog(false, invType)
     end
 
     --Addon AdvancedFilters is enabled? RefreshTheSubfilterButton bar now to hide/show subfilters where no items are below
@@ -735,6 +749,7 @@ local function FCOCraftFilter_ChangeCraftingStationBankSettings(comingFrom)
 
     if locVars.gLastCraftingType == nil then return false end
     --Is the "show only bank items" filter enabled?
+--d("[FCOCF]FCOCraftFilter_ChangeCraftingStationBankSettings-comingFrom: " ..tostring(comingFrom).. ", enableMediumFilters: " ..tostring(settings.enableMediumFilters) .. ", lastCraftingType: " ..tostring(locVars.gLastCraftingType) .. ", currentSetting: " .. tostring(settings.hideItemsFromBank[locVars.gLastCraftingType][comingFrom]))
     if settings.enableMediumFilters then
         if settings.hideItemsFromBank[locVars.gLastCraftingType][comingFrom] == true then
             settings.hideItemsFromBank[locVars.gLastCraftingType][comingFrom] = -99
@@ -946,27 +961,27 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy)
     --Add the button to the head line of the crafting station menu
     --DECONSTRUCTION
     local addedButton
+    local craftingType = GetCraftingInteractionType()
+    local xExtra = 0
     if comingFrom == LF_SMITHING_DECONSTRUCT or comingFrom == LF_JEWELRY_DECONSTRUCT then
-        addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_INVENTORY, zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_TABS:GetName() .. "DeconstructFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, -458, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_TABS, false)
+        if craftingType == CRAFTING_TYPE_CLOTHIER then
+            xExtra = 37
+        elseif craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
+            xExtra = 37
+        end
+        addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_INVENTORY, zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_TABS:GetName() .. "DeconstructFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, (-458 - xExtra) , 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_TABS, false)
     --IMPROVEMENT
     elseif comingFrom == LF_SMITHING_IMPROVEMENT or comingFrom == LF_JEWELRY_IMPROVEMENT then
-        addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_INVENTORY, zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_TABS:GetName() .. "ImproveFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, -458, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_TABS, false)
+        if craftingType == CRAFTING_TYPE_CLOTHIER then
+            xExtra = 37
+        elseif craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
+            xExtra = 37
+        end
+        addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_INVENTORY, zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_TABS:GetName() .. "ImproveFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, (-458 - xExtra), 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_TABS, false)
     --Research
     elseif comingFrom == LF_SMITHING_RESEARCH or comingFrom == LF_JEWELRY_RESEARCH then
-        addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_RESEARCH, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS:GetName() .. "ResearchFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, -458, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS, false)
-        --Move the research timer icon and the currently available research slots label to the right
-        local parentPanelCtrl = zoVars.CRAFTSTATION_SMITHING_RESEARCH
-        local numResearchingLabel = zoVars.CRAFTSTATION_SMITHING_RESEARCH_NUM_RESEARCH_LABEL
-        local timerIcon = zoVars.CRAFTSTATION_SMITHING_RESEARCH_TIMER_ICON
-        if numResearchingLabel then
-            numResearchingLabel:ClearAnchors()
-            numResearchingLabel:SetAnchor(TOPLEFT, NIL, NIL, 75, 18)
-        end
-        if timerIcon then
-            timerIcon:ClearAnchors()
-            timerIcon:SetAnchor(RIGHT, numResearchingLabel, LEFT, -2, 0)
-        end
-
+        reanchorResearchControls()
+        addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_RESEARCH, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS:GetName() .. "ResearchFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, -4, 3, RIGHT, LEFT, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TIMER_ICON, false)
     --Research dialog
     elseif comingFrom == LF_SMITHING_RESEARCH_DIALOG or comingFrom == LF_JEWELRY_RESEARCH_DIALOG then
         addedButton = AddButton(zoVars.RESEARCH_POPUP_TOP_DIVIDER, zoVars.RESEARCH_POPUP_TOP_DIVIDER:GetName() .. "ResearchDialogFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, 36, -20, LEFT, LEFT, zoVars.RESEARCH_POPUP_TOP_DIVIDER, false)
@@ -975,13 +990,13 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy)
         --Hide the enchantment extraction button
         AddButton(nil, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "ExtFCOCraftFilterHideBankButton", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,nil, nil, nil, nil, nil, true)
         --Show the enchantment creation button
-        addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "CreationFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_CREATION, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, -325, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
+        addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "CreationFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_CREATION, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, -394, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
         --ENCHANTING EXTRACTION
     elseif comingFrom == LF_ENCHANTING_EXTRACTION then
         --Hide the enchantment creation button
         AddButton(nil, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "CreationFCOCraftFilterHideBankButton", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,nil, nil, nil, nil, nil, true)
         --Show the enchantment extraction button
-        addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "ExtFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_EXTRACTION, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, -466, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
+        addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "ExtFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_EXTRACTION, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, -505, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
         --TRANSMUTATION / RETRAIT
     elseif comingFrom == LF_RETRAIT then
         addedButton = AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM, buttonNormalTexture, buttonNormalTexture, buttonClickedTexture, buttonMediumTexture, 32, 32, -458, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
@@ -997,29 +1012,27 @@ end
 --Create the hooks & pre-hooks
 local function FCOCraftFilter_CreateHooks()
     --======== SMITHING =============================================================
---[[
-    --Prehook the smithing function SetMode() which gets executed as the smithing tabs are changed
-    ZO_PreHook(ZO_Smithing, "SetMode", function(smithing_obj, mode)
-        --Deconstruction
-        if     mode == SMITHING_MODE_DECONSTRUCTION then
+    --[[
+        --Prehook the smithing function SetMode() which gets executed as the smithing tabs are changed
+        ZO_PreHook(ZO_Smithing, "SetMode", function(smithing_obj, mode)
             --Deconstruction
-            zo_callLater(function()
-                FCOCraftFilter_PreHookButtonHandler(LF_SMITHING_DECONSTRUCT, "SMITHING deconstruct")
-            end, 10)
-            --Improvement
-        elseif mode == SMITHING_MODE_IMPROVEMENT then
-            zo_callLater(function()
-                FCOCraftFilter_PreHookButtonHandler(LF_SMITHING_IMPROVEMENT, "SMITHING improvement")
-            end, 10)
-        end
-        --Go on with original function
-        return false
-    end)
-]]
-    local smithingSetModeOrig = zo_smith.SetMode
-    zo_smith.SetMode = function(smithing_obj, mode, ...)
---d("[FCOCraftFilter]SMITHING.SetMode: " ..tostring(mode))
-        smithingSetModeOrig(smithing_obj, mode, ...)
+            if     mode == SMITHING_MODE_DECONSTRUCTION then
+                --Deconstruction
+                zo_callLater(function()
+                    FCOCraftFilter_PreHookButtonHandler(LF_SMITHING_DECONSTRUCT, "SMITHING deconstruct")
+                end, 10)
+                --Improvement
+            elseif mode == SMITHING_MODE_IMPROVEMENT then
+                zo_callLater(function()
+                    FCOCraftFilter_PreHookButtonHandler(LF_SMITHING_IMPROVEMENT, "SMITHING improvement")
+                end, 10)
+            end
+            --Go on with original function
+            return false
+        end)
+    ]]
+    local function smithingSetMode(smithing_obj, mode, ...)
+        --d("[FCOCraftFilter]SMITHING.SetMode: " ..tostring(mode))
         local craftingType = GetCraftingInteractionType()
         --Deconstruction
         if     mode == SMITHING_MODE_DECONSTRUCTION then
@@ -1027,11 +1040,11 @@ local function FCOCraftFilter_CreateHooks()
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
                 filterPanelId = LF_JEWELRY_DECONSTRUCT
             end
-        --Deconstruction
+            --Deconstruction
             zo_callLater(function()
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING deconstruct SetMode")
             end, 10)
-        --Improvement
+            --Improvement
         elseif mode == SMITHING_MODE_IMPROVEMENT then
             local filterPanelId = LF_SMITHING_IMPROVEMENT
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
@@ -1040,7 +1053,7 @@ local function FCOCraftFilter_CreateHooks()
             zo_callLater(function()
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING improvement SetMode")
             end, 10)
-        --Research
+            --Research
         elseif mode == SMITHING_MODE_RESEARCH then
             local filterPanelId = LF_SMITHING_RESEARCH
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
@@ -1048,43 +1061,45 @@ local function FCOCraftFilter_CreateHooks()
             end
             zo_callLater(function()
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING research SetMode")
+                reanchorResearchControls()
             end, 10)
---[[
-        --Research
-        elseif mode == SMITHING_MODE_RESEARCH then
-            local craftingType = GetCraftingInteractionType()
-            local filterPanelId = LF_SMITHING_RESEARCH_DIALOG
-            if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
-                filterPanelId = LF_JEWELRY_RESEARCH_DIALOG
-            end
-            zo_callLater(function()
-                FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING research")
-            end, 10)
-]]
+            --[[
+                    --Research
+                    elseif mode == SMITHING_MODE_RESEARCH then
+                        local craftingType = GetCraftingInteractionType()
+                        local filterPanelId = LF_SMITHING_RESEARCH_DIALOG
+                        if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
+                            filterPanelId = LF_JEWELRY_RESEARCH_DIALOG
+                        end
+                        zo_callLater(function()
+                            FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING research")
+                        end, 10)
+            ]]
         end
         --Go on with original function
         return false
     end
+    SecurePostHook(zo_smith, "SetMode", smithingSetMode)
 
     --======== ENCHANTING ===========================================================
---[[
-    --Prehook the enchanting function SetEnchantingMode() which gets executed as the enchanting tabs are changed
-    ZO_PreHook(ZO_Enchanting, "SetEnchantingMode", function(enchanting_obj, enchantingMode)
-        --Creation
-        if     enchantingMode == ENCHANTING_MODE_CREATION then
-            zo_callLater(function()
-                FCOCraftFilter_PreHookButtonHandler(LF_ENCHANTING_CREATION, "ENCHANTING create")
-            end, 10)
-            --Extraction
-        elseif enchantingMode == ENCHANTING_MODE_EXTRACTION then
-            zo_callLater(function()
-                FCOCraftFilter_PreHookButtonHandler(LF_ENCHANTING_EXTRACTION, "ENCHANTING extract")
-            end, 10)
-        end
-        --Go on with original function
-        return false
-    end)
-]]
+    --[[
+        --Prehook the enchanting function SetEnchantingMode() which gets executed as the enchanting tabs are changed
+        ZO_PreHook(ZO_Enchanting, "SetEnchantingMode", function(enchanting_obj, enchantingMode)
+            --Creation
+            if     enchantingMode == ENCHANTING_MODE_CREATION then
+                zo_callLater(function()
+                    FCOCraftFilter_PreHookButtonHandler(LF_ENCHANTING_CREATION, "ENCHANTING create")
+                end, 10)
+                --Extraction
+            elseif enchantingMode == ENCHANTING_MODE_EXTRACTION then
+                zo_callLater(function()
+                    FCOCraftFilter_PreHookButtonHandler(LF_ENCHANTING_EXTRACTION, "ENCHANTING extract")
+                end, 10)
+            end
+            --Go on with original function
+            return false
+        end)
+    ]]
     local function enchantingModeChangeFunction(enchantingMode)
         --Creation
         if     enchantingMode == ENCHANTING_MODE_CREATION then
@@ -1098,6 +1113,7 @@ local function FCOCraftFilter_CreateHooks()
             end, 10)
         end
     end
+    --[[
     local enchantingSetEnchantingModeOrig = zo_ench.SetEnchantingMode
     if enchantingSetEnchantingModeOrig ~= nil then
         zo_ench.SetEnchantingMode = function(enchanting_obj, enchantingMode, ...)
@@ -1114,6 +1130,8 @@ local function FCOCraftFilter_CreateHooks()
             enchantingModeChangeFunction(self.enchantingMode)
         end
     end
+    ]]
+    SecurePostHook(zo_ench, "OnModeUpdated", function(self) enchantingModeChangeFunction(self.enchantingMode) end)
 
     --======== RETRAIT ===========================================================
     --Called as the retrait filters are changed (Armor, weapons, jewelry). But it's not called as the retrait station
@@ -1149,19 +1167,10 @@ local function FCOCraftFilter_CreateHooks()
                     filterPanelId = LF_SMITHING_RESEARCH_DIALOG
                 end
             end
---d("[FCOCF]researchPopupDialog:OnShow - craftingType: " ..tostring(craftingType) .. ", filterPanelId: " ..tostring(filterPanelId))
+            --d("[FCOCF]researchPopupDialog:OnShow - craftingType: " ..tostring(craftingType) .. ", filterPanelId: " ..tostring(filterPanelId))
             if filterPanelId then
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING research popup OnShow")
             end
-            --Set the current filterPanel to the normal SMITHING or JEWELRY research panel again now
-            if craftingType then
-                if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
-                    filterPanelId = LF_JEWELRY_RESEARCH
-                elseif craftingType ~= CRAFTING_TYPE_INVALID and craftingType ~= CRAFTING_TYPE_ENCHANTING then
-                    filterPanelId = LF_SMITHING_RESEARCH
-                end
-            end
-            FCOCF.locVars.gLastPanel = filterPanelId
         end)
 
         ZO_PreHookHandler(researchPopupDialogCustomControl, "OnHide", function()
@@ -1170,22 +1179,28 @@ local function FCOCraftFilter_CreateHooks()
             FCOCF.preventerVars.ZO_ListDialog1ResearchIsOpen = false
 --d("[FCOCraftFilter]researchPopupDialogCustomControl:OnHide")
             --Hide the filter button at LF_SMITHING_RESEARCH_DIALOG or LF_JEWELRY_RESEARCH_DIALOG
-            local filterPanelId
+            local filterPanelId, filterPanelIdAfterClose
             local craftingType = GetCraftingInteractionType()
             if craftingType then
                 if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
-                    filterPanelId = LF_JEWELRY_RESEARCH_DIALOG
+                    filterPanelId           = LF_JEWELRY_RESEARCH_DIALOG
+                    filterPanelIdAfterClose = LF_JEWELRY_RESEARCH
                 elseif craftingType ~= CRAFTING_TYPE_INVALID and craftingType ~= CRAFTING_TYPE_ENCHANTING then
-                    filterPanelId = LF_SMITHING_RESEARCH_DIALOG
+                    filterPanelId           = LF_SMITHING_RESEARCH_DIALOG
+                    filterPanelIdAfterClose = LF_SMITHING_RESEARCH
                 end
-            end
-            if filterPanelId then
-                --Hide the button now at the research dialog so it does not show at other dialogs like repair, recharge, enchant, etc.
-                if FCOCF.filterButtons then
-                    local buttonToHide = FCOCF.filterButtons[filterPanelId]
-                    if buttonToHide ~= nil and buttonToHide.SetHidden ~= nil then
-                        buttonToHide:SetHidden(true)
+                if filterPanelId then
+                    --Hide the button now at the research dialog so it does not show at other dialogs like repair, recharge, enchant, etc.
+                    if FCOCF.filterButtons then
+                        local buttonToHide = FCOCF.filterButtons[filterPanelId]
+                        if buttonToHide ~= nil and buttonToHide.SetHidden ~= nil then
+                            buttonToHide:SetHidden(true)
+                        end
                     end
+                end
+                --Reset the current filterPanel to the normal SMITHING or JEWELRY research panel again now
+                if filterPanelIdAfterClose then
+                    FCOCF.locVars.gLastPanel = filterPanelIdAfterClose
                 end
             end
         end)

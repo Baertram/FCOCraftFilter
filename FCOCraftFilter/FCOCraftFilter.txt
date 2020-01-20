@@ -1,8 +1,8 @@
 ## Title: |c00FF00FCO |cFFFF00CraftFilter|r
 ## Author: Baertram
-## Version: 0.3.1
-## AddOnVersion: 31
-## APIVersion: 100028 100029
+## Version: 0.3.4
+## AddOnVersion: 34
+## APIVersion: 100029 100030
 ## Description: Filter crafting station contents (Inventory, bank, all)
 ## SavedVariables: FCOCraftFilter_Settings
 ## DependsOn: LibFilters-3.0 LibAddonMenu-2.0 LibLoadedAddons
