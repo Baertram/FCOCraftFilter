@@ -98,29 +98,28 @@ FCOCF.zoVars.TRANSMUTATIONSTATION_CONTROL                             = retrait.
 FCOCF.zoVars.TRANSMUTATIONSTATION_INVENTORY                           = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventory
 FCOCF.zoVars.TRANSMUTATIONSTATION_TABS                                = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventoryTabs
 
-local controlsForChecks = {
-    inv                     = ZO_PlayerInventory,
-    invList                 = ZO_PlayerInventoryList,
-    bank                    = ZO_PlayerBank,
-    bankBackpack            = ZO_PlayerBankBackpack,
-    guildBank               = ZO_GuildBank,
-    guildBankBackpack       = ZO_GuildBankBackpack,
-    storeWindow             = ZO_StoreWindow,
-    buyBackList             = ZO_BuyBackListContents,
-    repairWindow            = ZO_RepairWindowList,
-    craftBag                = ZO_CraftBag,
-    houseBank               = ZO_HouseBank,
-    guildStoreSellBackpack  = ZO_PlayerInventory,
-    --Keyboard variables
-    store                   = STORE_WINDOW,
-    smithingBaseVar         = ZO_Smithing,
-    smithing                = SMITHING,
-    enchantingBaseVar       = ZO_Enchanting,
-    enchanting              = ENCHANTING,
-    retrait                 = ZO_RETRAIT_STATION_KEYBOARD, -- needed for the other retrait related filter stuff (hooks, util functions)
-    fence                   = FENCE_KEYBOARD,
-}
+--Include banked items checkbox
+FCOCF.zoVars.INCLUDE_BANKED_CHECKBOX_NAME                             = "IncludeBanked"
 
+local controlsForChecks = {
+    --Keyboard variables
+    smithing                = SMITHING,
+    enchanting              = ENCHANTING,
+    retrait                 = ZO_RETRAIT_STATION_KEYBOARD,
+}
+--Smithing
+controlsForChecks.refinementPanel       =   controlsForChecks.smithing.refinementPanel
+controlsForChecks.creationPanel         =   controlsForChecks.smithing.creationPanel
+controlsForChecks.deconstructionPanel   =   controlsForChecks.smithing.deconstructionPanel
+controlsForChecks.improvementPanel      =   controlsForChecks.smithing.improvementPanel
+controlsForChecks.researchPanel         =   controlsForChecks.smithing.researchPanel
+--Enchanting
+controlsForChecks.enchantCreatePanel    =   controlsForChecks.enchanting
+controlsForChecks.enchantExtractPanel   =   controlsForChecks.enchanting
+--Retrait
+controlsForChecks.retraitPanel          =   controlsForChecks.retrait.retraitPanel
+
+--The mapping between LibFilters3 panelid and the panel holding the inventory
 local craftingTablePanels = {
     --Smithing
     [LF_SMITHING_REFINE]        = controlsForChecks.refinementPanel,
@@ -158,6 +157,26 @@ FCOCF.preventerVars.ZO_ListDialog1ResearchIsOpen = false
 FCOCF.localizationVars = {}
 FCOCF.localizationVars.FCOCF_loc = {}
 --===================== FUNCTIONS ==============================================
+
+local function hideIncludeBankedItemsCheckbox(filterPanelId)
+    filterPanelId = filterPanelId or FCOCF.locVars.gLastPanel
+    local craftingPanel = craftingTablePanels[filterPanelId]
+    if craftingPanel ~= nil then
+        local includeBankedCBoxName = FCOCF.zoVars.INCLUDE_BANKED_CHECKBOX_NAME
+        local includeBankedCbox = craftingPanel.control and craftingPanel.control:GetNamedChild(includeBankedCBoxName)
+        if not includeBankedCbox then
+            includeBankedCbox = craftingPanel.inventory and craftingPanel.inventory.control and craftingPanel.inventory.control:GetNamedChild(includeBankedCBoxName)
+        end
+        if includeBankedCbox then
+            --Enable the checkbox so banked items are not filtered by default and FCOCraftFilter can filter with it's own button
+            ZO_CheckButton_SetCheckState(includeBankedCbox, true)
+            if includeBankedCbox.IsHidden and includeBankedCbox:IsHidden() == false then
+                includeBankedCbox:SetHidden(true)
+            end
+        end
+    end
+end
+
 
 -- Build the options menu
 local function BuildAddonMenu()
@@ -878,20 +897,7 @@ local function FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation)
     craftSkill = craftSkill or CRAFTING_TYPE_INVALID
 
     --Hide the ZOs checkbox for "Include banked" and rest it to it's default value
-    local craftingPanel = craftingTablePanels[lastPanel]
-    if craftingPanel ~= nil then
-d(">found crafting table pabel")
-        local includeBankedCbox = craftingPanel.control and craftingPanel.control:GetNamedChild("IncludeBanked")
-        if includeBankedCbox then
-d(">found include banked checkbox - checking it!")
-            --Enable the checkbox so banked items are not filtered by default and FCOCraftFilter can filter with it's own button
-            ZO_CheckButton_SetCheckState(includeBankedCbox, true)
-            if includeBankedCbox.IsHidden and includeBankedCbox:IsHidden() == false then
-d(">hiding checkbox now")
-                includeBankedCbox:SetHidden(true)
-            end
-        end
-    end
+    hideIncludeBankedItemsCheckbox()
 
     --Unregister old filters if the crafting type is unknown and the last panel was the retrait station
     if lastPanel == LF_RETRAIT and locVars.gLastCraftingType == CRAFTING_TYPE_INVALID then
@@ -1083,11 +1089,12 @@ local function FCOCraftFilter_CreateHooks()
         end)
     ]]
     local function smithingSetMode(smithing_obj, mode, ...)
-        --d("[FCOCraftFilter]SMITHING.SetMode: " ..tostring(mode))
+--d("[FCOCraftFilter]SMITHING.SetMode: " ..tostring(mode))
         local craftingType = GetCraftingInteractionType()
+        local filterPanelId
         --Deconstruction
         if     mode == SMITHING_MODE_DECONSTRUCTION then
-            local filterPanelId = LF_SMITHING_DECONSTRUCT
+            filterPanelId = LF_SMITHING_DECONSTRUCT
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
                 filterPanelId = LF_JEWELRY_DECONSTRUCT
             end
@@ -1097,7 +1104,7 @@ local function FCOCraftFilter_CreateHooks()
             end, 10)
             --Improvement
         elseif mode == SMITHING_MODE_IMPROVEMENT then
-            local filterPanelId = LF_SMITHING_IMPROVEMENT
+            filterPanelId = LF_SMITHING_IMPROVEMENT
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
                 filterPanelId = LF_JEWELRY_IMPROVEMENT
             end
@@ -1106,7 +1113,7 @@ local function FCOCraftFilter_CreateHooks()
             end, 10)
             --Research
         elseif mode == SMITHING_MODE_RESEARCH then
-            local filterPanelId = LF_SMITHING_RESEARCH
+            filterPanelId = LF_SMITHING_RESEARCH
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
                 filterPanelId = LF_JEWELRY_RESEARCH
             end
@@ -1127,6 +1134,7 @@ local function FCOCraftFilter_CreateHooks()
                         end, 10)
             ]]
         end
+        hideIncludeBankedItemsCheckbox(filterPanelId)
         --Go on with original function
         return false
     end
@@ -1152,17 +1160,22 @@ local function FCOCraftFilter_CreateHooks()
         end)
     ]]
     local function enchantingModeChangeFunction(enchantingMode)
+--d("[FCOCraftFilter]enchantingModeChangeFunction - enchantingMode: " ..tostring(enchantingMode))
         --Creation
+        local filterPanelId
         if     enchantingMode == ENCHANTING_MODE_CREATION then
             zo_callLater(function()
-                FCOCraftFilter_PreHookButtonHandler(LF_ENCHANTING_CREATION, "ENCHANTING create SetEnchantingMode/OnModeUpdate")
+                filterPanelId = LF_ENCHANTING_CREATION
+                FCOCraftFilter_PreHookButtonHandler(filterPanelId, "ENCHANTING create SetEnchantingMode/OnModeUpdate")
             end, 10)
             --Extraction
         elseif enchantingMode == ENCHANTING_MODE_EXTRACTION then
             zo_callLater(function()
-                FCOCraftFilter_PreHookButtonHandler(LF_ENCHANTING_EXTRACTION, "ENCHANTING extract SetEnchantingMode/OnModeUpdate")
+                filterPanelId = LF_ENCHANTING_EXTRACTION
+                FCOCraftFilter_PreHookButtonHandler(filterPanelId, "ENCHANTING extract SetEnchantingMode/OnModeUpdate")
             end, 10)
         end
+        hideIncludeBankedItemsCheckbox(filterPanelId)
     end
     --[[
     local enchantingSetEnchantingModeOrig = zo_ench.SetEnchantingMode
@@ -1189,10 +1202,13 @@ local function FCOCraftFilter_CreateHooks()
     --was opened before and is re-opened later on at the same tab + same subfilter :-( (e.g. armor -> shields)
     --THis will be handled via the event EVENT_CRAFTING_STATION_INTERACT
     local function ChangeFilterRetraitPanel (self, filterTab)
+--d("[FCOCraftFilter]ChangeFilterRetraitPanel - filterTab: " ..tostring(filterTab))
         --Set the crafting panel type to none
         FCOCF.locVars.gLastCraftingType = CRAFTING_TYPE_INVALID
         --Update the visible buttons
-        FCOCraftFilter_PreHookButtonHandler(LF_RETRAIT, "RETRAIT changeFilter")
+        local filterPanelId = LF_RETRAIT
+        FCOCraftFilter_PreHookButtonHandler(filterPanelId, "RETRAIT changeFilter")
+        hideIncludeBankedItemsCheckbox(filterPanelId)
     end
     local retraitPanel = FCOCF.zoVars.TRANSMUTATIONSTATION_RETRAIT_PANEL
     ZO_PreHook(retraitPanel.inventory, "ChangeFilter", ChangeFilterRetraitPanel)
@@ -1204,6 +1220,7 @@ local function FCOCraftFilter_CreateHooks()
             --As this OnShow function will be also called for other ZO_ListDialog1 dialogs...
             --Check if we are at the research popup dialog
             if not isResearchListDialogShown() then return false end
+--d("[FCOCraftFilter]ResearchPopupDialog - OnShow")
 --d("[FCOCraftFilter]researchPopupDialogCustomControl:OnShow")
             FCOCF.preventerVars.ZO_ListDialog1ResearchIsOpen = true
             --Show filter button at LF_SMITHING_RESEARCH_DIALOG or LF_JEWELRY_RESEARCH_DIALOG
@@ -1220,6 +1237,7 @@ local function FCOCraftFilter_CreateHooks()
             end
             --d("[FCOCF]researchPopupDialog:OnShow - craftingType: " ..tostring(craftingType) .. ", filterPanelId: " ..tostring(filterPanelId))
             if filterPanelId then
+                hideIncludeBankedItemsCheckbox(filterPanelId)
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING research popup OnShow")
             end
         end)
@@ -1265,6 +1283,7 @@ local function FCOCraftFilter_CreateHooks()
             libFiltersPanelId = LF_JEWELRY_RESEARCH
         end
         if not libFiltersPanelId then return end
+        hideIncludeBankedItemsCheckbox(libFiltersPanelId)
         FCOCraftFilter_CraftingStationUpdateBankItemOption(libFiltersPanelId, false)
     end)
 end
