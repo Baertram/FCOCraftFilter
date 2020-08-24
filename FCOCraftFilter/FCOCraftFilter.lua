@@ -5,12 +5,14 @@
 --[[
 Filter your crafting station items
 ]]
-------------------------------------------------------------------
---- 2) Error: 2019-10-20, Baertram
----    Research dialog popup: CHange between bank, bag or both does nto change the icon nor filters it correctly!
-------------------------------------------------------------------
 FCOCF = {}
+FCOCraftFilter = FCOCF
 local FCOCF = FCOCF
+
+--Libraries (See EVENT_ADD_ON_LOADED)
+local libFilters
+local LAM
+local LIBLA
 
 --Addon variables
 FCOCF.addonVars = {}
@@ -19,23 +21,11 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.10 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.3.4' -- version shown in the settings panel
-FCOCF.addonVars.addonVersionOptionsNumber 	= 0.34
+FCOCF.addonVars.addonVersionOptions 		= '0.3.6' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptionsNumber 	= 0.36
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
 FCOCF.addonVars.gAddonLoaded				= false
-
---Create the filter object for addon libFilters 2.0
-local libFilters = LibFilters3
-if libFilters == nil and LibStub then libFilters = LibStub("LibFilters-3.0") end
---Initialize the libFilters filters
-libFilters:InitializeLibFilters()
---Create the settings panel object of libAddonMenu 2.0
-local LAM = LibAddonMenu2
-if LAM == nil and LibStub then LAM = LibStub('LibAddonMenu-2.0') end
---Loaded addons library
-local LIBLA = LibLoadedAddons
-if LIBLA == nil and LibStub then LIBLA = LibStub:GetLibrary("LibLoadedAddons") end
 
 --Available languages
 FCOCF.numVars = {}
@@ -68,7 +58,7 @@ FCOCF.filterButtons = {}
 --Control names of ZO* standard controls etc.
 FCOCF.zoVars = {}
 --Smithing
-----Deconstruction
+--Deconstruction
 FCOCF.zoVars.CRAFTSTATION_SMITHING                                    = ZO_Smithing
 local zo_smith = FCOCF.zoVars.CRAFTSTATION_SMITHING
 FCOCF.zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_INVENTORY           = ZO_SmithingTopLevelDeconstructionPanelInventory
@@ -76,11 +66,11 @@ FCOCF.zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_TABS                = ZO_Smith
 FCOCF.zoVars.CRAFTSTATION_SMITHING_VAR                                = SMITHING
 local smith     = FCOCF.zoVars.CRAFTSTATION_SMITHING_VAR
 
-----Improvement
+--Improvement
 FCOCF.zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_INVENTORY              = ZO_SmithingTopLevelImprovementPanelInventory
 FCOCF.zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_TABS                   = ZO_SmithingTopLevelImprovementPanelInventoryTabs
 
-----Research
+--Research
 FCOCF.zoVars.CRAFTSTATION_SMITHING_RESEARCH                           = ZO_SmithingTopLevelResearchPanel
 FCOCF.zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS                      = ZO_SmithingTopLevelResearchPanelTabs
 FCOCF.zoVars.CRAFTSTATION_SMITHING_RESEARCH_TIMER_ICON                = ZO_SmithingTopLevelResearchPanelTimerIcon
@@ -100,13 +90,57 @@ local ench      = FCOCF.zoVars.CRAFTSTATION_ENCHANTING_VAR
 FCOCF.zoVars.CRAFTSTATION_ENCHANTING_INVENTORY                        = ZO_EnchantingTopLevelInventory
 FCOCF.zoVars.CRAFTSTATION_ENCHANTING_TABS                             = ZO_EnchantingTopLevelInventoryTabs
 
-----Transmutation
+--Transmutation
 FCOCF.zoVars.TRANSMUTATIONSTATION                                     = ZO_RETRAIT_STATION_KEYBOARD
 local retrait   = FCOCF.zoVars.TRANSMUTATIONSTATION
 FCOCF.zoVars.TRANSMUTATIONSTATION_RETRAIT_PANEL                       = retrait.retraitPanel
 FCOCF.zoVars.TRANSMUTATIONSTATION_CONTROL                             = retrait.retraitPanel.control
 FCOCF.zoVars.TRANSMUTATIONSTATION_INVENTORY                           = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventory
 FCOCF.zoVars.TRANSMUTATIONSTATION_TABS                                = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventoryTabs
+
+local controlsForChecks = {
+    inv                     = ZO_PlayerInventory,
+    invList                 = ZO_PlayerInventoryList,
+    bank                    = ZO_PlayerBank,
+    bankBackpack            = ZO_PlayerBankBackpack,
+    guildBank               = ZO_GuildBank,
+    guildBankBackpack       = ZO_GuildBankBackpack,
+    storeWindow             = ZO_StoreWindow,
+    buyBackList             = ZO_BuyBackListContents,
+    repairWindow            = ZO_RepairWindowList,
+    craftBag                = ZO_CraftBag,
+    houseBank               = ZO_HouseBank,
+    guildStoreSellBackpack  = ZO_PlayerInventory,
+    --Keyboard variables
+    store                   = STORE_WINDOW,
+    smithingBaseVar         = ZO_Smithing,
+    smithing                = SMITHING,
+    enchantingBaseVar       = ZO_Enchanting,
+    enchanting              = ENCHANTING,
+    retrait                 = ZO_RETRAIT_STATION_KEYBOARD, -- needed for the other retrait related filter stuff (hooks, util functions)
+    fence                   = FENCE_KEYBOARD,
+}
+
+local craftingTablePanels = {
+    --Smithing
+    [LF_SMITHING_REFINE]        = controlsForChecks.refinementPanel,
+    [LF_JEWELRY_REFINE]         = controlsForChecks.refinementPanel,
+    [LF_SMITHING_CREATION]      = controlsForChecks.creationPanel,
+    [LF_JEWELRY_CREATION]       = controlsForChecks.creationPanel,
+    [LF_SMITHING_DECONSTRUCT]   = controlsForChecks.deconstructionPanel,
+    [LF_JEWELRY_DECONSTRUCT]    = controlsForChecks.deconstructionPanel,
+    [LF_SMITHING_IMPROVEMENT]   = controlsForChecks.improvementPanel,
+    [LF_JEWELRY_IMPROVEMENT]    = controlsForChecks.improvementPanel,
+    [LF_SMITHING_RESEARCH]      = controlsForChecks.researchPanel,
+    [LF_JEWELRY_RESEARCH]       = controlsForChecks.researchPanel,
+    --Enchanting
+    [LF_ENCHANTING_CREATION]    = controlsForChecks.enchantCreatePanel,
+    [LF_ENCHANTING_EXTRACTION]  = controlsForChecks.enchantExtractPanel,
+    --Retrait
+    [LF_RETRAIT]                = controlsForChecks.retraitPanel,
+}
+FCOCF.craftingTablePanels = craftingTablePanels
+
 
 --Settings / SavedVars
 FCOCF.settingsVars			    = {}
@@ -838,12 +872,29 @@ end
 --Event upon opening a crafting station
 local function FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation)
 --d("FCOCraftFilter_OnOpenCraftingStation")
+    local locVars = FCOCF.locVars
+    local lastPanel = locVars.gLastPanel
     --Set crafting station type to invalid if not given (e.g. when coming from the retrait station)
     craftSkill = craftSkill or CRAFTING_TYPE_INVALID
 
+    --Hide the ZOs checkbox for "Include banked" and rest it to it's default value
+    local craftingPanel = craftingTablePanels[lastPanel]
+    if craftingPanel ~= nil then
+d(">found crafting table pabel")
+        local includeBankedCbox = craftingPanel.control and craftingPanel.control:GetNamedChild("IncludeBanked")
+        if includeBankedCbox then
+d(">found include banked checkbox - checking it!")
+            --Enable the checkbox so banked items are not filtered by default and FCOCraftFilter can filter with it's own button
+            ZO_CheckButton_SetCheckState(includeBankedCbox, true)
+            if includeBankedCbox.IsHidden and includeBankedCbox:IsHidden() == false then
+d(">hiding checkbox now")
+                includeBankedCbox:SetHidden(true)
+            end
+        end
+    end
+
     --Unregister old filters if the crafting type is unknown and the last panel was the retrait station
-    local locVars = FCOCF.locVars
-    if locVars.gLastPanel == LF_RETRAIT and locVars.gLastCraftingType == CRAFTING_TYPE_INVALID then
+    if lastPanel == LF_RETRAIT and locVars.gLastCraftingType == CRAFTING_TYPE_INVALID then
         FCOCraftFilter_UnregisterFilter(locVars.gLastCraftingType .. "_" .. locVars.gLastPanel, locVars.gLastPanel)
     end
 
@@ -1206,6 +1257,16 @@ local function FCOCraftFilter_CreateHooks()
         end)
     end
 
+    --Secure post hook the research function to update the research lists properly and re-register the LibFilters filters after a research was started
+    SecurePostHook("ResearchSmithingTrait", function()
+        local libFiltersPanelId = LF_SMITHING_RESEARCH
+        local craftingType = GetCraftingInteractionType()
+        if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
+            libFiltersPanelId = LF_JEWELRY_RESEARCH
+        end
+        if not libFiltersPanelId then return end
+        FCOCraftFilter_CraftingStationUpdateBankItemOption(libFiltersPanelId, false)
+    end)
 end
 
 --Register the slash commands
@@ -1224,6 +1285,18 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
     end
 	--Unregister this event again so it isn't fired again after this addon has beend reckognized
     EVENT_MANAGER:UnregisterForEvent(addonVars.gAddonName, EVENT_ADD_ON_LOADED)
+
+    --Create the filter object for addon libFilters 2.0
+    libFilters = LibFilters3
+    if libFilters == nil and LibStub then libFilters = LibStub("LibFilters-3.0") end
+    --Initialize the libFilters filters
+    libFilters:InitializeLibFilters()
+    --Create the settings panel object of libAddonMenu 2.0
+    LAM = LibAddonMenu2
+    if LAM == nil and LibStub then LAM = LibStub('LibAddonMenu-2.0') end
+    --Loaded addons library
+    LIBLA = LibLoadedAddons
+    if LIBLA == nil and LibStub then LIBLA = LibStub:GetLibrary("LibLoadedAddons") end
 
 	addonVars.gAddonLoaded = false
 
@@ -1283,9 +1356,7 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
     --Use the current addon version to read the settings now
 	if (FCOCF.settingsVars.defaultSettings.saveMode == 1) then
         FCOCF.settingsVars.settings = ZO_SavedVars:NewCharacterIdSettings(addonVars.addonSavedVariablesName, addonVars.addonVersion , "Settings", defaults )
-	elseif (FCOCF.settingsVars.defaultSettings.saveMode == 2) then
-        FCOCF.settingsVars.settings = ZO_SavedVars:NewAccountWide(addonVars.addonSavedVariablesName, addonVars.addonVersion, "Settings", defaults)
-	else
+	else--if (FCOCF.settingsVars.defaultSettings.saveMode == 2) then
         FCOCF.settingsVars.settings = ZO_SavedVars:NewAccountWide(addonVars.addonSavedVariablesName, addonVars.addonVersion, "Settings", defaults)
 	end
 --=============================================================================================================
