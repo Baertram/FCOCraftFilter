@@ -14,6 +14,8 @@ local libFilters
 local LAM
 local LIBLA
 
+local APIVersion = GetAPIVersion()
+
 --Addon variables
 FCOCF.addonVars = {}
 FCOCF.addonVars.gAddonName					= "FCOCraftFilter"
@@ -21,8 +23,8 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.10 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.3.6' -- version shown in the settings panel
-FCOCF.addonVars.addonVersionOptionsNumber 	= 0.36
+FCOCF.addonVars.addonVersionOptions 		= '0.3.7' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptionsNumber 	= 0.37
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
 FCOCF.addonVars.gAddonLoaded				= false
@@ -91,10 +93,20 @@ FCOCF.zoVars.CRAFTSTATION_ENCHANTING_INVENTORY                        = ZO_Encha
 FCOCF.zoVars.CRAFTSTATION_ENCHANTING_TABS                             = ZO_EnchantingTopLevelInventoryTabs
 
 --Transmutation
-FCOCF.zoVars.TRANSMUTATIONSTATION                                     = ZO_RETRAIT_STATION_KEYBOARD
-local retrait   = FCOCF.zoVars.TRANSMUTATIONSTATION
-FCOCF.zoVars.TRANSMUTATIONSTATION_RETRAIT_PANEL                       = retrait.retraitPanel
-FCOCF.zoVars.TRANSMUTATIONSTATION_CONTROL                             = retrait.retraitPanel.control
+--Transmutation / Retrait
+if APIVersion >= 100033 then
+    --Markarth or newer
+    FCOCF.zoVars.TRANSMUTATIONSTATION                                 = ZO_RETRAIT_KEYBOARD
+    local retrait   = FCOCF.zoVars.TRANSMUTATIONSTATION
+    FCOCF.zoVars.TRANSMUTATIONSTATION_RETRAIT_PANEL                   = retrait
+    FCOCF.zoVars.TRANSMUTATIONSTATION_CONTROL                         = retrait.control
+else
+    --Stonethorn or older
+    FCOCF.zoVars.TRANSMUTATIONSTATION                                 = ZO_RETRAIT_STATION_KEYBOARD
+    local retrait   = FCOCF.zoVars.TRANSMUTATIONSTATION
+    FCOCF.zoVars.TRANSMUTATIONSTATION_RETRAIT_PANEL                   = retrait.retraitPanel
+    FCOCF.zoVars.TRANSMUTATIONSTATION_CONTROL                         = retrait.retraitPanel.control
+end
 FCOCF.zoVars.TRANSMUTATIONSTATION_INVENTORY                           = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventory
 FCOCF.zoVars.TRANSMUTATIONSTATION_TABS                                = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventoryTabs
 
