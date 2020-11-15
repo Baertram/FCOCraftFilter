@@ -23,8 +23,8 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.10 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.3.7' -- version shown in the settings panel
-FCOCF.addonVars.addonVersionOptionsNumber 	= 0.37
+FCOCF.addonVars.addonVersionOptions 		= '0.3.9' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptionsNumber 	= 0.39
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
 FCOCF.addonVars.gAddonLoaded				= false
@@ -94,24 +94,17 @@ FCOCF.zoVars.CRAFTSTATION_ENCHANTING_TABS                             = ZO_Encha
 
 --Transmutation
 --Transmutation / Retrait
-if APIVersion >= 100033 then
-    --Markarth or newer
-    FCOCF.zoVars.TRANSMUTATIONSTATION                                 = ZO_RETRAIT_KEYBOARD
-    local retrait   = FCOCF.zoVars.TRANSMUTATIONSTATION
-    FCOCF.zoVars.TRANSMUTATIONSTATION_RETRAIT_PANEL                   = retrait
-    FCOCF.zoVars.TRANSMUTATIONSTATION_CONTROL                         = retrait.control
-else
-    --Stonethorn or older
-    FCOCF.zoVars.TRANSMUTATIONSTATION                                 = ZO_RETRAIT_STATION_KEYBOARD
-    local retrait   = FCOCF.zoVars.TRANSMUTATIONSTATION
-    FCOCF.zoVars.TRANSMUTATIONSTATION_RETRAIT_PANEL                   = retrait.retraitPanel
-    FCOCF.zoVars.TRANSMUTATIONSTATION_CONTROL                         = retrait.retraitPanel.control
-end
-FCOCF.zoVars.TRANSMUTATIONSTATION_INVENTORY                           = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventory
-FCOCF.zoVars.TRANSMUTATIONSTATION_TABS                                = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventoryTabs
+--Markarth or newer
+FCOCF.zoVars.TRANSMUTATIONSTATION                                       = ZO_RETRAIT_KEYBOARD
+local retrait   = FCOCF.zoVars.TRANSMUTATIONSTATION
+FCOCF.zoVars.TRANSMUTATIONSTATION_RETRAIT_PANEL                         = retrait
+FCOCF.zoVars.TRANSMUTATIONSTATION_CONTROL                               = retrait.control
+FCOCF.zoVars.TRANSMUTATIONSTATION_INVENTORY                             = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventory
+FCOCF.zoVars.TRANSMUTATIONSTATION_TABS                                  = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventoryTabs
 
 --Include banked items checkbox
-FCOCF.zoVars.INCLUDE_BANKED_CHECKBOX_NAME                             = "IncludeBanked"
+FCOCF.zoVars.INCLUDE_BANKED_CHECKBOX_NAME                               = "IncludeBanked"
+FCOCF.zoVars.QUEST_ITEMS_ONLY_CHECKBOX_NAME                             = "QuestItemsOnly"
 
 local controlsForChecks = {
     --Keyboard variables
@@ -169,6 +162,32 @@ FCOCF.preventerVars.ZO_ListDialog1ResearchIsOpen = false
 FCOCF.localizationVars = {}
 FCOCF.localizationVars.FCOCF_loc = {}
 --===================== FUNCTIONS ==============================================
+
+local function moveQuestOnlyCheckbox(filterPanelId)
+    --d("[FCOCF]moveQuestOnlyCheckbox")
+    filterPanelId = filterPanelId or FCOCF.locVars.gLastPanel
+    --Only needed if AF is active
+    if not AdvancedFilters then return end
+    local craftingPanel = craftingTablePanels[filterPanelId]
+    if craftingPanel ~= nil then
+        local onlyQuestCBoxName = FCOCF.zoVars.QUEST_ITEMS_ONLY_CHECKBOX_NAME
+        local onlyQuestCBox = craftingPanel.control and craftingPanel.control:GetNamedChild(onlyQuestCBoxName)
+        if not onlyQuestCBox then
+            onlyQuestCBox = craftingPanel.inventory and craftingPanel.inventory.control and craftingPanel.inventory.control:GetNamedChild(onlyQuestCBoxName)
+        end
+        if onlyQuestCBox then
+            --Reanchor the OnlyQuest checkbox now
+            onlyQuestCBox:ClearAnchors()
+            local anchorTo
+            if craftingPanel.inventory and craftingPanel.inventory.control then
+                anchorTo = craftingPanel.inventory.control
+            else
+                anchorTo = craftingPanel.control
+            end
+            onlyQuestCBox:SetAnchor(TOPLEFT, anchorTo, TOPLEFT, 0, -30)
+        end
+    end
+end
 
 local function hideIncludeBankedItemsCheckbox(filterPanelId)
     filterPanelId = filterPanelId or FCOCF.locVars.gLastPanel
@@ -1179,6 +1198,7 @@ local function FCOCraftFilter_CreateHooks()
             zo_callLater(function()
                 filterPanelId = LF_ENCHANTING_CREATION
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "ENCHANTING create SetEnchantingMode/OnModeUpdate")
+                zo_callLater(function() moveQuestOnlyCheckbox(filterPanelId) end, 50)
             end, 10)
             --Extraction
         elseif enchantingMode == ENCHANTING_MODE_EXTRACTION then
