@@ -48,11 +48,16 @@ FCOCF.localizationVars.localizationAll = {
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
         --Buttons
         ["button_FCO_hide_bank_tooltip"]         = "Next: Hide bank items",
-        ["button_FCO_show_bank_tooltip"]         = "Next: Show all items",
+        ["button_FCO_show_all_tooltip"]         = "Next: Show all items",
         ["button_FCO_show_only_bank_tooltip"]    = "Next: Only show bank items",
         ["button_FCO_currently_hide_bank_tooltip"]         = "Currently: Hiding bank items",
-        ["button_FCO_currently_show_bank_tooltip"]         = "Currently: Showing all items",
+        ["button_FCO_currently_show_all_tooltip"]         = "Currently: Showing all items",
         ["button_FCO_currently_show_only_bank_tooltip"]    = "Currently: Only showing bank items",
+
+        ["button_FCO_hide_craftbag_tooltip"]         = "Next: Hide Craftbag items",
+        ["button_FCO_show_only_craftbag_tooltip"]    = "Next: Only show Craftbag items",
+        ["button_FCO_currently_hide_craftbag_tooltip"]         = "Aktuell: Hiding Craftbag items",
+        ["button_FCO_currently_show_only_craftbag_tooltip"]    = "Aktuell: Only showing Craftbag items",
     },
 --==============================================================================
 	--German / Deutsch
@@ -85,11 +90,15 @@ FCOCF.localizationVars.localizationAll = {
         ["chatcommands_help"]					 = "|cFFFFFF'hilfe' / 'liste'|cFFFF00: Zeigt diese Information zum Addon an",
         --Buttons
         ["button_FCO_hide_bank_tooltip"]         = "N\195\164chste: Verstecke Bank Gegenstände",
-        ["button_FCO_show_bank_tooltip"]         = "N\195\164chste: Zeige alle Gegenstände an",
+        ["button_FCO_show_all_tooltip"]         = "N\195\164chste: Zeige alle Gegenstände an",
         ["button_FCO_show_only_bank_tooltip"]    = "N\195\164chste: Zeige NUR Bank Gegenstände an",
         ["button_FCO_currently_hide_bank_tooltip"]         = "Aktuell: Versteckt Bank Gegenstände",
-        ["button_FCO_currently_show_bank_tooltip"]         = "Aktuell: Zeigt alle Gegenstände",
+        ["button_FCO_currently_show_all_tooltip"]         = "Aktuell: Zeigt alle Gegenstände",
         ["button_FCO_currently_show_only_bank_tooltip"]    = "Aktuell: Zeigt NUR Bank Gegenstände",
+        ["button_FCO_hide_craftbag_tooltip"]         = "N\195\164chste: Verstecke Handwerksbeutel Gegenstände",
+        ["button_FCO_show_only_craftbag_tooltip"]    = "N\195\164chste: Zeige NUR Handwerksbeutel Gegenstände an",
+        ["button_FCO_currently_hide_craftbag_tooltip"]         = "Aktuell: Versteckt Handwerksbeutel Gegenstände",
+        ["button_FCO_currently_show_only_craftbag_tooltip"]    = "Aktuell: Zeigt NUR Handwerksbeutel Gegenstände",
     },
 --==============================================================================
 --French / Französisch
@@ -122,10 +131,10 @@ FCOCF.localizationVars.localizationAll = {
 		["chatcommands_help"]	 				 = "|cFFFFFF'aide' / 'lister'|cFFFF00: Affiche cette information à propos de l'addon",
         --Buttons
 		["button_FCO_hide_bank_tooltip"]         = "Cliquez pour masquer les objets en banque",
-        ["button_FCO_show_bank_tooltip"]         = "Cliquez pour afficher les objets en banque",
+        ["button_FCO_show_all_tooltip"]         = "Cliquez pour afficher les objets en banque",
         ["button_FCO_show_only_bank_tooltip"]    = "Cliquez pour afficher uniquement les objets en banque",
         ["button_FCO_currently_hide_bank_tooltip"]         = "Les objets en banque ne sont pas affichés",
-        ["button_FCO_currently_show_bank_tooltip"]         = "Les objets en banque sont affichés",
+        ["button_FCO_currently_show_all_tooltip"]         = "Les objets en banque sont affichés",
         ["button_FCO_currently_show_only_bank_tooltip"]    = "Seuls les objets en banque sont affichés",
 	},
 --==============================================================================
@@ -158,10 +167,10 @@ FCOCF.localizationVars.localizationAll = {
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
         --Buttons
         ["button_FCO_hide_bank_tooltip"]         = "Next: Hide bank items",
-        ["button_FCO_show_bank_tooltip"]         = "Next: Show bank items",
+        ["button_FCO_show_all_tooltip"]         = "Next: Show bank items",
         ["button_FCO_show_only_bank_tooltip"]    = "Next: Only show bank items",
         ["button_FCO_currently_hide_bank_tooltip"]         = "Currently: Hiding bank items",
-        ["button_FCO_currently_show_bank_tooltip"]         = "Currently: Showing bank items",
+        ["button_FCO_currently_show_all_tooltip"]         = "Currently: Showing bank items",
         ["button_FCO_currently_show_only_bank_tooltip"]    = "Currently: Only showing bank items",
 	},
 --==============================================================================
@@ -195,10 +204,10 @@ FCOCF.localizationVars.localizationAll = {
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
         --Buttons
         ["button_FCO_hide_bank_tooltip"]         = "Next: Hide bank items",
-        ["button_FCO_show_bank_tooltip"]         = "Next: Show bank items",
+        ["button_FCO_show_all_tooltip"]         = "Next: Show bank items",
         ["button_FCO_show_only_bank_tooltip"]    = "Next: Only show bank items",
         ["button_FCO_currently_hide_bank_tooltip"]         = "Currently: Hiding bank items",
-        ["button_FCO_currently_show_bank_tooltip"]         = "Currently: Showing bank items",
+        ["button_FCO_currently_show_all_tooltip"]         = "Currently: Showing bank items",
         ["button_FCO_currently_show_only_bank_tooltip"]    = "Currently: Only showing bank items",
     },
 --==============================================================================
@@ -231,10 +240,10 @@ FCOCF.localizationVars.localizationAll = {
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
         --Buttons
         ["button_FCO_hide_bank_tooltip"]         = "次: 銀行アイテム非表示",
-        ["button_FCO_show_bank_tooltip"]         = "次: 銀行アイテム表示",
+        ["button_FCO_show_all_tooltip"]         = "次: 銀行アイテム表示",
         ["button_FCO_show_only_bank_tooltip"]    = "次: 銀行アイテムのみ表示",
         ["button_FCO_currently_hide_bank_tooltip"]         = "現在: 銀行アイテム非表示",
-        ["button_FCO_currently_show_bank_tooltip"]         = "現在: 銀行アイテム表示",
+        ["button_FCO_currently_show_all_tooltip"]         = "現在: 銀行アイテム表示",
         ["button_FCO_currently_show_only_bank_tooltip"]    = "現在: 銀行アイテムのみ表示",
     },
 --==============================================================================
@@ -267,10 +276,10 @@ FCOCF.localizationVars.localizationAll = {
         ["chatcommands_info"]                    = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
         --Buttons
         ["button_FCO_hide_bank_tooltip"]         = "Следующий: Скрыть предметы из банка",
-        ["button_FCO_show_bank_tooltip"]         = "Следующий: Показать все предметы",
+        ["button_FCO_show_all_tooltip"]         = "Следующий: Показать все предметы",
         ["button_FCO_show_only_bank_tooltip"]    = "Следующий: Показать предметы только из банка",
         ["button_FCO_currently_hide_bank_tooltip"]       = "Текущий: Предметы из банка скрыты",
-        ["button_FCO_currently_show_bank_tooltip"]       = "Текущий: Показаны все предметы",
+        ["button_FCO_currently_show_all_tooltip"]       = "Текущий: Показаны все предметы",
         ["button_FCO_currently_show_only_bank_tooltip"]  = "Текущий: Показаны предметы только из банка",
     },
 }
