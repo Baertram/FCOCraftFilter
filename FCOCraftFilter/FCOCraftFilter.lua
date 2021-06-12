@@ -29,8 +29,8 @@ FCOCF.addonVars.gAddonName					= "FCOCraftFilter"
 FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
-FCOCF.addonVars.addonVersion		   		= 0.40 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.4.0' -- version shown in the settings panel
+FCOCF.addonVars.addonVersion		   		= 0.50 -- Changing this will reset SavedVariables!
+FCOCF.addonVars.addonVersionOptions 		= '0.5.0' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -1591,6 +1591,28 @@ local function FCOCraftFilter_Initialized()
         }
         AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
     end
+end
+
+--API function
+
+--Get the active button state
+function FCOCF.GetActiveCraftPanelFilterSetting(filterPanelId)
+    if filterPanelId == nil then return end
+    local locVars = FCOCF.locVars
+    local lastCraftingType = locVars.gLastCraftingType
+    if lastCraftingType == nil then return end
+
+    local settings = FCOCF.settingsVars.settings
+    if not settings then return end
+
+    --Is the "show only bank items" filter enabled?
+    --d("[FCOCF]GetActiveCraftPanelFilterSetting-filterPanelId: " ..tostring(filterPanelId).. ", enableMediumFilters: " ..tostring(settings.enableMediumFilters) .. ", lastCraftingType: " ..tostring(locVars.gLastCraftingType) .. ", currentSetting: " .. tostring(settings.filterApplied[locVars.gLastCraftingType][filterPanelId]))
+    return settings.filterApplied[locVars.gLastCraftingType][filterPanelId]
+end
+
+--Get the filter callback function
+function FCOCF.GetFilterCallbackFunction()
+    return FCOCraftFilter_FilterCallbackFunction
 end
 
 
