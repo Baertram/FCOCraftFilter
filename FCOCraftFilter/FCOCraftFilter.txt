@@ -6,7 +6,7 @@
 ## Description: Filter crafting station contents (Inventory, bank, all)
 ## SavedVariables: FCOCraftFilter_Settings
 ## DependsOn: LibFilters-3.0>=321 LibAddonMenu-2.0>=32 LibLoadedAddons>=14
-## OptionalDependsOn: AdvancedFilters FCOItemSaver
+## OptionalDependsOn: FCOItemSaver
 
 ##Libraries
 ##Using standalone libraries! Check addon description at:

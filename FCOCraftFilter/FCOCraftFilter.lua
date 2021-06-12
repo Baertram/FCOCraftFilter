@@ -154,6 +154,14 @@ local craftingTablePanels = {
 }
 FCOCF.craftingTablePanels = craftingTablePanels
 
+local craftingTableSVs = {
+    [LF_SMITHING_DECONSTRUCT]   = { svVar = craftingTablePanels[LF_SMITHING_DECONSTRUCT],   svName = "savedVars",   includeBanked = "includeBankedItemsChecked" },
+    [LF_JEWELRY_DECONSTRUCT]    = { svVar = craftingTablePanels[LF_JEWELRY_DECONSTRUCT],    svName = "savedVars",   includeBanked = "includeBankedItemsChecked" },
+    [LF_SMITHING_RESEARCH]      = { svVar = craftingTablePanels[LF_SMITHING_RESEARCH],      svName = "savedVars",   includeBanked = "includeBankedItemsChecked" },
+    [LF_JEWELRY_RESEARCH]       = { svVar = craftingTablePanels[LF_JEWELRY_RESEARCH],       svName = "savedVars",   includeBanked = "includeBankedItemsChecked" },
+}
+FCOCF.craftingTableSVs = craftingTableSVs
+
 
 --Settings / SavedVars
 FCOCF.settingsVars			    = {}
@@ -270,6 +278,18 @@ local function hideIncludeBankedItemsCheckbox(filterPanelId)
         if includeBankedCbox then
             --Enable the checkbox so banked items are not filtered by default and FCOCraftFilter can filter with it's own button
             ZO_CheckButton_SetCheckState(includeBankedCbox, true)
+            -->Does not change the SavedVariables as e.g. ZO_SmithingExtraction:OnFilterChanged is not executed!
+            -->Update the SV manually here
+            local svData = craftingTableSVs[filterPanelId]
+            if svData ~= nil and svData.svVar ~= nil and svData.svName ~= nil then
+                local svVar = svData.svVar
+                local svName = svData.svName
+                local svTab = svVar[svName]
+                local includeBankedStr = svData.includeBanked
+                if includeBankedStr ~= nil then
+                    svTab[includeBankedStr] = true
+                end
+            end
             if includeBankedCbox.IsHidden and includeBankedCbox:IsHidden() == false then
                 includeBankedCbox:SetHidden(true)
             end
@@ -514,11 +534,9 @@ local function isResearchListDialogShown()
 end
 
 --Callback function for the filter: This function will hide/show the items at the crafting station panel
---Slot: the inventorySlot
 --return false: hide the slot
 --return true: show the slot
-local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex, ...)
-    --d("FCOCraftFilter_FilterCallbackFunction")
+local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex, calledFromExternalAddon)
     local locVars = FCOCF.locVars
     local lastPanel = locVars.gLastPanel
     local lastCraftingType = locVars.gLastCraftingType
@@ -527,7 +545,6 @@ local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex, ...)
     --The result variable, predefined with true to show the item
     local filterAppliedSettings = settings.filterApplied[lastCraftingType][lastPanel]
     if filterAppliedSettings == FCOCF_SHOW_ALL then return true end
-    --Smithing refine -> Special filter for craftbag items
 
     local resultVar = true
     if filterAppliedSettings == FCOCF_ONLY_SHOW_INVENTORY then
@@ -536,22 +553,20 @@ local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex, ...)
         end
 
     elseif filterAppliedSettings == FCOCF_ONLY_SHOW_BANKED then
-        if (bagId == BAG_BANK or bagId == BAG_SUBSCRIBER_BANK) then
-        else
+        if (bagId ~= BAG_BANK and bagId ~= BAG_SUBSCRIBER_BANK) then
             resultVar = false
         end
 
     elseif filterAppliedSettings == FCOCF_ONLY_SHOW_CRAFTBAG then
         if bagId ~= BAG_VIRTUAL then
-            return false
+            resultVar = false
         end
 
     elseif filterAppliedSettings == FCOCF_DO_NOT_SHOW_CRAFTBAG then
         if bagId == BAG_VIRTUAL then
-            return false
+            resultVar = false
         end
     end
-    --d("BagId: " .. bagId .. ", slotIndex: " .. slotIndex .. ", resultVar: " .. tostring(resultVar))
     --Return the result variable now
     return resultVar
 end
@@ -1001,7 +1016,7 @@ local function FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation)
     --Set crafting station type to invalid if not given (e.g. when coming from the retrait station)
     craftSkill = craftSkill or CRAFTING_TYPE_INVALID
 
-    --Hide the ZOs checkbox for "Include banked" and rest it to it's default value
+    --Hide the ZOs checkbox for "Include banked" and reset it to it's default value
     hideIncludeBankedItemsCheckbox()
 
     --Unregister old filters if the crafting type is unknown and the last panel was the retrait station
@@ -1028,15 +1043,71 @@ local function FCOCraftFilter_OnCloseCrafting(...)
     FCOCF.locVars.gLastCraftingType = nil
 end
 
---[[
 -- Fires each time after addons were loaded and player is ready to move (after each zone change too)
 local function FCOCraftFilter_Player_Activated(...)
 	--Prevent this event to be fired again and again upon each zone change
 	EVENT_MANAGER:UnregisterForEvent(FCOCF.addonVars.gAddonName, EVENT_PLAYER_ACTIVATED)
 
-    FCOCF.addonVars.gAddonLoaded = false
+    --Register the extra filters for AdvancedFilters Subfilterbar refresh function (to hide subfilter buttons as the bag types are filtered)
+    if AdvancedFilters ~= nil and AdvancedFilters_RegisterSubfilterbarRefreshFilter ~= nil then
+        --Deconstruction
+        local subfilterRefreshFilterInformationTable = {
+            inventoryType       = {INVENTORY_BACKPACK, INVENTORY_BANK},
+            craftingType        = {CRAFTING_TYPE_CLOTHIER, CRAFTING_TYPE_BLACKSMITHING, CRAFTING_TYPE_WOODWORKING},
+            filterPanelId       = LF_SMITHING_DECONSTRUCT,
+            filterName          = "FCOCraftFilter_Deconstruction",
+            callbackFunction    = function(slotData)
+                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
+            end,
+        }
+        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
+        --Improvement
+        subfilterRefreshFilterInformationTable.filterPanelId = LF_SMITHING_IMPROVEMENT
+        subfilterRefreshFilterInformationTable.filterName    = "FCOCraftFilter_Improvement"
+        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
+        --Enchanting creation
+        subfilterRefreshFilterInformationTable = {
+            inventoryType       = {INVENTORY_BACKPACK, INVENTORY_BANK},
+            craftingType        = {CRAFTING_TYPE_ENCHANTING},
+            filterPanelId       = LF_ENCHANTING_CREATION,
+            filterName          = "FCOCraftFilter_Enchanting_Creation",
+            callbackFunction    = function(slotData)
+                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
+            end,
+        }
+        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
+        --Enchanting extraction
+        subfilterRefreshFilterInformationTable.filterPanelId = LF_ENCHANTING_EXTRACTION
+        subfilterRefreshFilterInformationTable.filterName    = "FCOCraftFilter_Enchanting_Extraction"
+        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
+        --Jewelry deconstruction
+        subfilterRefreshFilterInformationTable = {
+            inventoryType       = {INVENTORY_BACKPACK, INVENTORY_BANK},
+            craftingType        = {CRAFTING_TYPE_JEWELRYCRAFTING},
+            filterPanelId       = LF_JEWELRY_DECONSTRUCT,
+            filterName          = "FCOCraftFilter_Jewelry_Deconstruction",
+            callbackFunction    = function(slotData)
+                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
+            end,
+        }
+        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
+        --Jewelry improvement
+        subfilterRefreshFilterInformationTable.filterPanelId = LF_JEWELRY_IMPROVEMENT
+        subfilterRefreshFilterInformationTable.filterName    = "FCOCraftFilter_Jewelry_Improvement"
+        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
+        --Retrait
+        subfilterRefreshFilterInformationTable = {
+            inventoryType       = {INVENTORY_BACKPACK, INVENTORY_BANK},
+            craftingType        = {CRAFTING_TYPE_NONE},
+            filterPanelId       = LF_RETRAIT,
+            filterName          = "FCOCraftFilter_Retrait",
+            callbackFunction    = function(slotData)
+                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
+            end,
+        }
+        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
+    end
 end
-]]
 
 --==============================================================================
 --===== HOOKS BEGIN ============================================================
@@ -1526,71 +1597,11 @@ end
 local function FCOCraftFilter_Initialized()
 	EVENT_MANAGER:RegisterForEvent(FCOCF.addonVars.gAddonName, EVENT_ADD_ON_LOADED, FCOCraftFilter_Loaded)
 	--Register for the zone change/player ready event
-	--EVENT_MANAGER:RegisterForEvent(FCOCF.addonVars.gAddonName, EVENT_PLAYER_ACTIVATED, FCOCraftFilter_Player_Activated)
+	EVENT_MANAGER:RegisterForEvent(FCOCF.addonVars.gAddonName, EVENT_PLAYER_ACTIVATED, FCOCraftFilter_Player_Activated)
 	--Register the events for crafting stations
 	EVENT_MANAGER:RegisterForEvent(FCOCF.addonVars.gAddonName, EVENT_CRAFTING_STATION_INTERACT, function(eventCode, craftSkill, sameStation) FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation) end)
     EVENT_MANAGER:RegisterForEvent(FCOCF.addonVars.gAddonName, EVENT_RETRAIT_STATION_INTERACT_START, function(eventCode) FCOCraftFilter_OnOpenCrafting(eventCode) end)
     EVENT_MANAGER:RegisterForEvent(FCOCF.addonVars.gAddonName, EVENT_END_CRAFTING_STATION_INTERACT, FCOCraftFilter_OnCloseCrafting)
-
-    --Register the extra filters for AdvancedFilters Subfilterbar refresh function (to hide subfilter buttons as the bag types are filtered)
-    if AdvancedFilters ~= nil and AdvancedFilters_RegisterSubfilterbarRefreshFilter ~= nil then
-        --Deconstruction
-        local subfilterRefreshFilterInformationTable = {
-            inventoryType       = {INVENTORY_BACKPACK, INVENTORY_BANK},
-            craftingType        = {CRAFTING_TYPE_CLOTHIER, CRAFTING_TYPE_BLACKSMITHING, CRAFTING_TYPE_WOODWORKING},
-            filterPanelId       = LF_SMITHING_DECONSTRUCT,
-            filterName          = "FCOCraftFilter_Deconstruction",
-            callbackFunction    = function(slotData)
-                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
-            end,
-        }
-        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
-        --Improvement
-        subfilterRefreshFilterInformationTable.filterPanelId = LF_SMITHING_IMPROVEMENT
-        subfilterRefreshFilterInformationTable.filterName    = "FCOCraftFilter_Improvement"
-        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
-        --Enchanting creation
-        subfilterRefreshFilterInformationTable = {
-            inventoryType       = {INVENTORY_BACKPACK, INVENTORY_BANK},
-            craftingType        = {CRAFTING_TYPE_ENCHANTING},
-            filterPanelId       = LF_ENCHANTING_CREATION,
-            filterName          = "FCOCraftFilter_Enchanting_Creation",
-            callbackFunction    = function(slotData)
-                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
-            end,
-        }
-        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
-        --Enchanting extraction
-        subfilterRefreshFilterInformationTable.filterPanelId = LF_ENCHANTING_EXTRACTION
-        subfilterRefreshFilterInformationTable.filterName    = "FCOCraftFilter_Enchanting_Extraction"
-        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
-        --Jewelry deconstruction
-        subfilterRefreshFilterInformationTable = {
-            inventoryType       = {INVENTORY_BACKPACK, INVENTORY_BANK},
-            craftingType        = {CRAFTING_TYPE_JEWELRYCRAFTING},
-            filterPanelId       = LF_JEWELRY_DECONSTRUCT,
-            filterName          = "FCOCraftFilter_Jewelry_Deconstruction",
-            callbackFunction    = function(slotData)
-                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
-            end,
-        }
-        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
-        --Jewelry improvement
-        subfilterRefreshFilterInformationTable.filterPanelId = LF_JEWELRY_IMPROVEMENT
-        subfilterRefreshFilterInformationTable.filterName    = "FCOCraftFilter_Jewelry_Improvement"
-        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
-        --Retrait
-        subfilterRefreshFilterInformationTable = {
-            inventoryType       = {INVENTORY_BACKPACK, INVENTORY_BANK},
-            craftingType        = {CRAFTING_TYPE_NONE},
-            filterPanelId       = LF_RETRAIT,
-            filterName          = "FCOCraftFilter_Retrait",
-            callbackFunction    = function(slotData)
-                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
-            end,
-        }
-        AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
-    end
 end
 
 --API function
