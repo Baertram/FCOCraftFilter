@@ -12,9 +12,8 @@ local FCOCF = FCOCF
 --Libraries (See EVENT_ADD_ON_LOADED)
 local libFilters
 local LAM
-local LIBLA
 
-local APIVersion = GetAPIVersion()
+--local APIVersion = GetAPIVersion()
 
 --Constants
 FCOCF_SHOW_ALL              =  1
@@ -29,8 +28,8 @@ FCOCF.addonVars.gAddonName					= "FCOCraftFilter"
 FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
-FCOCF.addonVars.addonVersion		   		= 0.50 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.5.0' -- version shown in the settings panel
+FCOCF.addonVars.addonVersion		   		= 0.51 -- Changing this will reset SavedVariables!
+FCOCF.addonVars.addonVersionOptions 		= '0.5.1' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -954,11 +953,11 @@ end
 local function FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, changeSettings)
     changeSettings = changeSettings or false
     if comingFrom == nil then return false end
-    local settings = FCOCF.settingsVars.settings
     local locVars = FCOCF.locVars
     local lastCraftingType = locVars.gLastCraftingType
     if lastCraftingType == nil then return false end
 --d("[FCOCraftFilter_CraftingStationUpdateBankItemOption] comingFrom: " .. comingFrom .. ", changeSettings: " .. tostring(changeSettings))
+    local settings = FCOCF.settingsVars.settings
     if settings.filterApplied[lastCraftingType][comingFrom] == nil then return false end
 
 --d(">> settings.filterApplied[" .. tostring(locVars.gLastCraftingType) .. "][" .. tostring(comingFrom) .. "]: " .. tostring(settings.filterApplied[locVars.gLastCraftingType][comingFrom]))
@@ -984,7 +983,6 @@ local function FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, ch
         --Refresh the inventory
         FCOCraftFilter_UpdateInventory(comingFrom)
     end
-
 end
 
 --Check if the retrait station is shown and add the button now
@@ -1503,8 +1501,6 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
     libFilters:InitializeLibFilters()
     --Create the settings panel object of libAddonMenu 2.0
     LAM = LibAddonMenu2
-    --Loaded addons library
-    LIBLA = LibLoadedAddons
 
 	addonVars.gAddonLoaded = false
 
@@ -1588,9 +1584,6 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
     RegisterSlashCommands()
 
     addonVars.gAddonLoaded = true
-
-	-- Registers addon to loadedAddon library
-	LIBLA:RegisterAddon(addonVars.gAddonName, addonVars.addonVersionOptionsNumber)
 end
 
 -- Register the event "addon loaded" for this addon
@@ -1602,6 +1595,9 @@ local function FCOCraftFilter_Initialized()
 	EVENT_MANAGER:RegisterForEvent(FCOCF.addonVars.gAddonName, EVENT_CRAFTING_STATION_INTERACT, function(eventCode, craftSkill, sameStation) FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation) end)
     EVENT_MANAGER:RegisterForEvent(FCOCF.addonVars.gAddonName, EVENT_RETRAIT_STATION_INTERACT_START, function(eventCode) FCOCraftFilter_OnOpenCrafting(eventCode) end)
     EVENT_MANAGER:RegisterForEvent(FCOCF.addonVars.gAddonName, EVENT_END_CRAFTING_STATION_INTERACT, FCOCraftFilter_OnCloseCrafting)
+
+    --For debugging: Change the settings and filters of LibFilters via chat /script command
+    FCOCF.debugChangeFilter = FCOCraftFilter_CraftingStationUpdateBankItemOption
 end
 
 --API function
