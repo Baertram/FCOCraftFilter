@@ -29,7 +29,7 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.51 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.5.1' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptions 		= '0.5.2' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -775,11 +775,11 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
     elseif hideButton and name == nil then
         return nil
     end
-    local settings = FCOCF.settingsVars.settings
+    --local settings = FCOCF.settingsVars.settings
     local locVars = FCOCF.locVars
-    local localizationVars = FCOCF.localizationVars.FCOCF_loc
-    local lastCraftingType = locVars.gLastCraftingType
-    local lastPanel= locVars.gLastPanel
+    --local localizationVars = FCOCF.localizationVars.FCOCF_loc
+    --local lastCraftingType = locVars.gLastCraftingType
+    --local lastPanel= locVars.gLastPanel
 
 
     local function colorizeTextureAccordingToFilterApplied(texture, filterApplied, isRefinementPanel)
@@ -1120,7 +1120,7 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy)
     --Implement some checks here in order to abort further handling if not at a crafting station.
     --> if not ZO_CraftingUtils_IsCraftingWindowOpen() or if locVars.gLastCraftingType == nil then return end
     local zoVars = FCOCF.zoVars
-    local localizationVars = FCOCF.localizationVars.FCOCF_loc
+    --local localizationVars = FCOCF.localizationVars.FCOCF_loc
 
 
     --Disable the medium filters if the settings for the medium filter is disabled
@@ -1183,9 +1183,9 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy)
     --  /esoui/art/tooltips/icon_bank.dds
     --3. /esoui/art/icons/servicemappins/servicepin_bank.dds
 
-    local buttonNormalTexture = "/EsoUI/Art/Inventory/inventory_tabIcon_items_up.dds"
-    local buttonClickedTexture = "/esoui/art/mainmenu/menubar_inventory_up.dds"
-    local buttonMediumTexture = "/esoui/art/icons/servicemappins/servicepin_bank.dds"
+    --local buttonNormalTexture = "/EsoUI/Art/Inventory/inventory_tabIcon_items_up.dds"
+    --local buttonClickedTexture = "/esoui/art/mainmenu/menubar_inventory_up.dds"
+    --local buttonMediumTexture = "/esoui/art/icons/servicemappins/servicepin_bank.dds"
 
     --Add the button to the head line of the crafting station menu
     --DECONSTRUCTION
@@ -1239,6 +1239,9 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy)
     end
     --Add the created/updated button to the table of added buttons so one can reference and hide them if needed
     if addedButton ~= nil then
+        addedButton:SetDrawTier(DT_MEDIUM)
+        addedButton:SetDrawLayer(DL_CONTROLS)
+
         FCOCF.filterButtons[comingFrom] = addedButton
     end
     --Return false to call the normal callback handler of the button afterwards
