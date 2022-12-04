@@ -40,7 +40,7 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.51 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.5.3' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptions 		= '0.5.4' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -1102,6 +1102,9 @@ local function addFilterButtonUniversalDecon(filterType)
     FCOCF.filterButtons[FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION] = FCOCF.filterButtons[FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION] or {}
     local universalDeconFilterButtons = FCOCF.filterButtons[FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION]
 
+    --Compatibility for addon PerfectPixel
+    local xOffset = (PerfectPixel == nil and -400) or -355
+
     --UniversalDeconstruction
     --DECONSTRUCTION & Jewelry deconstructin (re-use the same button, just updates the filterType!)
     if filterType == LF_SMITHING_DECONSTRUCT or filterType == LF_JEWELRY_DECONSTRUCT then
@@ -1122,7 +1125,7 @@ local function addFilterButtonUniversalDecon(filterType)
                 BOTTOM,
                 32,
                 32,
-                -400,
+                xOffset,
                 35,
                 BOTTOMLEFT,
                 TOPLEFT,
@@ -1150,7 +1153,7 @@ local function addFilterButtonUniversalDecon(filterType)
                 BOTTOM,
                 32,
                 32,
-                -400,
+                xOffset,
                 35,
                 BOTTOMLEFT,
                 TOPLEFT,
@@ -1310,6 +1313,8 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
     --> if not ZO_CraftingUtils_IsCraftingWindowOpen() or if locVars.gLastCraftingType == nil then return end
     --local localizationVars = FCOCF.localizationVars.FCOCF_loc
 
+    local isPerfectPixelEnabled = (PerfectPixel ~= nil and true) or false
+
 
     --Disable the medium filters if the settings for the medium filter is disabled
     if not settings.enableMediumFilters then
@@ -1387,50 +1392,60 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
 
         --REFINE
         if comingFrom == LF_SMITHING_REFINE or comingFrom == LF_JEWELRY_REFINE then
+            --Compatibility for addon PerfectPixel
+            local xOffset = (isPerfectPixelEnabled == false and -458) or -500
             if craftingType == CRAFTING_TYPE_CLOTHIER then
-                xExtra = 37
+                xExtra = -37
             elseif craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
-                xExtra = 37
+                xExtra = -37
             end
-            addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_REFINEMENT_INVENTORY, zoVars.CRAFTSTATION_SMITHING_REFINEMENT_TABS:GetName() .. "RefinementFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, (-458 - xExtra) , 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_REFINEMENT_TABS, false)
+            addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_REFINEMENT_INVENTORY, zoVars.CRAFTSTATION_SMITHING_REFINEMENT_TABS:GetName() .. "RefinementFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, (xOffset + xExtra) , 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_REFINEMENT_TABS, false)
         --DECONSTRUCTION
         elseif comingFrom == LF_SMITHING_DECONSTRUCT or comingFrom == LF_JEWELRY_DECONSTRUCT then
+            --Compatibility for addon PerfectPixel
+            local xOffset = (isPerfectPixelEnabled == false and -458) or -465
             if craftingType == CRAFTING_TYPE_CLOTHIER then
-                xExtra = 37
+                xExtra = -37
             elseif craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
-                xExtra = 37
+                xExtra = -37
             end
-            addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_INVENTORY, zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_TABS:GetName() .. "DeconstructFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, (-458 - xExtra) , 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_TABS, false)
+            addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_INVENTORY, zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_TABS:GetName() .. "DeconstructFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, (xOffset + xExtra) , 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_DECONSTRUCTION_TABS, false)
             --IMPROVEMENT
         elseif comingFrom == LF_SMITHING_IMPROVEMENT or comingFrom == LF_JEWELRY_IMPROVEMENT then
+            --Compatibility for addon PerfectPixel
+            local xOffset = (isPerfectPixelEnabled == false and -458) or -465
             if craftingType == CRAFTING_TYPE_CLOTHIER then
                 xExtra = 37
             elseif craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
                 xExtra = 37
             end
-            addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_INVENTORY, zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_TABS:GetName() .. "ImproveFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, (-458 - xExtra), 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_TABS, false)
+            addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_INVENTORY, zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_TABS:GetName() .. "ImproveFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, (xOffset + xExtra), 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_SMITHING_IMPROVEMENT_TABS, false)
             --Research
         elseif comingFrom == LF_SMITHING_RESEARCH or comingFrom == LF_JEWELRY_RESEARCH then
             reanchorResearchControls()
-            addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_RESEARCH, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS:GetName() .. "ResearchFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, -4, 3, RIGHT, LEFT, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TIMER_ICON, false)
+            local xOffset = (isPerfectPixelEnabled == false and -4) or -11
+            addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_RESEARCH, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS:GetName() .. "ResearchFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, xOffset, 3, RIGHT, LEFT, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TIMER_ICON, false)
             --Research dialog
         elseif comingFrom == LF_SMITHING_RESEARCH_DIALOG or comingFrom == LF_JEWELRY_RESEARCH_DIALOG then
             addedButton = AddButton(zoVars.RESEARCH_POPUP_TOP_DIVIDER, zoVars.RESEARCH_POPUP_TOP_DIVIDER:GetName() .. "ResearchDialogFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, 36, -20, LEFT, LEFT, zoVars.RESEARCH_POPUP_TOP_DIVIDER, false)
             --ENCHANTING CREATION
         elseif comingFrom == LF_ENCHANTING_CREATION then
+            local xOffset = (isPerfectPixelEnabled == false and -394) or -394
             --Hide the enchantment extraction button
             AddButton(nil, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "ExtFCOCraftFilterHideBankButton", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,nil, nil, nil, nil, nil, true)
             --Show the enchantment creation button
-            addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "CreationFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_CREATION, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, -394, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
+            addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "CreationFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_CREATION, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
             --ENCHANTING EXTRACTION
         elseif comingFrom == LF_ENCHANTING_EXTRACTION then
+            local xOffset = (isPerfectPixelEnabled == false and -505) or -505
             --Hide the enchantment creation button
             AddButton(nil, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "CreationFCOCraftFilterHideBankButton", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,nil, nil, nil, nil, nil, true)
             --Show the enchantment extraction button
-            addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "ExtFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_EXTRACTION, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, -505, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
+            addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "ExtFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_EXTRACTION, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
         --TRANSMUTATION / RETRAIT
         elseif comingFrom == LF_RETRAIT then
-            addedButton = AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, -458, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
+            local xOffset = (isPerfectPixelEnabled == false and -458) or -425
+            addedButton = AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
         end
     end
 
