@@ -1103,7 +1103,7 @@ local function addFilterButtonUniversalDecon(filterType)
     local universalDeconFilterButtons = FCOCF.filterButtons[FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION]
 
     --Compatibility for addon PerfectPixel
-    local xOffset = (PerfectPixel == nil and -400) or -355
+    local xOffset = (PerfectPixel == nil and -380) or -355
 
     --UniversalDeconstruction
     --DECONSTRUCTION & Jewelry deconstructin (re-use the same button, just updates the filterType!)
