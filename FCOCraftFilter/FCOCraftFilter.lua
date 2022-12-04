@@ -1183,7 +1183,8 @@ local function FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton(craftSkil
                 FCOCF.locVars.gLastCraftingType = craftSkill
                 --Add the button to the retrait station now
                 local tooltipVar = ""
-                AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM, 32, 32, -458, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
+                local xOffset = (PerfectPixel == nil and -458) or -425
+                AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM, 32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
                 --Update the filters for the Retrait station now (again)
                 FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, false)
             end
