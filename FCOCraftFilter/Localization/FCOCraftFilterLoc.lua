@@ -44,6 +44,12 @@ FCOCF.localizationVars.localizationAll = {
         ["options_header_crafting_stations"]     = "Crafting stations",
         ["options_enable_medium_filter"]         = "Enable 'show only bank' filter",
         ["options_enable_medium_filter_tooltip"] = "Enable a third filter where you can only show the items located at your bank",
+        ["options_header_research"] = GetString(SI_RESEARCH),
+        ["options_enable_button_only_currently_researched"] = "Show 'Only researched' button",
+        ["options_enable_button_only_currently_researched_tooltip"] = "Show a filter button at the research panel of crafting tables to switch between 'Currently researched' and 'All' items",
+        ["button_FCO_show_all_researched_tooltip"] = "Currently: Show all researchable items",
+        ["button_FCO_currently_show_only_researched_tooltip"] = "Currently: Show at the moment researched items",
+
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
         --Buttons
@@ -85,6 +91,12 @@ FCOCF.localizationVars.localizationAll = {
         ["options_header_crafting_stations"]     = "Handwerksstationen",
         ["options_enable_medium_filter"]         = "Aktiviere 'nur Bank' Filter",
         ["options_enable_medium_filter_tooltip"] = "Aktiviert einen dritten Filter, welcher nur die Gegenstände anzeigt, die auf der Bank liegen",
+        ["options_header_research"] = GetString(SI_RESEARCH),
+        ["options_enable_button_only_currently_researched"] = "Zeige 'Nur gerade analysierte' Knopf",
+        ["options_enable_button_only_currently_researched_tooltip"] = "Zeige einen Filter Knopf am Analyse Panel mit welchem du zwischen den 'Gerade analysierten' und 'Allen' Gegenständen umschalten kannst",
+        ["button_FCO_show_all_researched_tooltip"] = "Aktuell: Zeige alle Analyse Gegenstände",
+        ["button_FCO_currently_show_only_researched_tooltip"] = "Aktuell: Zeige nur gerade analysierte Gegenstände",
+
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
         ["chatcommands_help"]					 = "|cFFFFFF'hilfe' / 'liste'|cFFFF00: Zeigt diese Information zum Addon an",

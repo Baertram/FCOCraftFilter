@@ -40,7 +40,7 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.51 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.5.4' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptions 		= '0.6.0' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -148,8 +148,11 @@ local controlsForChecks = {
     smithing                = SMITHING,
     enchanting              = ENCHANTING,
     retrait                 = ZO_RETRAIT_STATION_KEYBOARD,
-    universalDeconstruction = UNIVERSAL_DECONSTRUCTION,
+    universalDeconstruction = zoVars.universalDecon,
 }
+controlsForChecks.researchPanel         =   controlsForChecks.smithing.researchPanel
+controlsForChecks.researchLineList      =   controlsForChecks.researchPanel.researchLineList
+
 --[[
 --Smithing
 controlsForChecks.refinementPanel       =   controlsForChecks.smithing.refinementPanel
@@ -165,7 +168,7 @@ controlsForChecks.retraitPanel          =   controlsForChecks.retrait.retraitPan
 ]]
 local deconPanel =      controlsForChecks.smithing.deconstructionPanel
 local researchPanel =   controlsForChecks.smithing.researchPanel
-local universalDeconPanel = controlsForChecks.universalDeconstruction.deconstructionPanel
+--local universalDeconPanel = controlsForChecks.universalDeconstruction.deconstructionPanel
 FCOCF.controlsForChecks = controlsForChecks
 
 --The mapping between LibFilters3 panelid and the panel holding the inventory
@@ -246,55 +249,66 @@ local textureOnlyInventory  = "/esoui/art/mainmenu/menubar_inventory_up.dds"
 local textureOnlyBank       = "/esoui/art/icons/servicemappins/servicepin_bank.dds"
 local textureOnlyCraftBag   = "/esoui/art/inventory/inventory_tabicon_craftbag_down.dds"
 local textureNoCraftBag     = "/esoui/art/hud/gamepad/gp_loothistory_icon_craftbag.dds"
+local textureCurrentlyResearched = "/esoui/art/crafting/smithing_tabicon_research_disabled.dds"
 
 --===================== FUNCTIONS ==============================================
 
-local function getCurrentButtonStateAndTexture(isUniversalDecon)
-    --Check the current settings at the given crafting panel and return the next buttons state and texture
-    local currentTexture, currentTooltip
+local function getCurrentButtonStateAndTexture(isUniversalDecon, isResearchShowOnlyCurrentlyResearched)
+    isUniversalDecon = isUniversalDecon or false
+    isResearchShowOnlyCurrentlyResearched = isResearchShowOnlyCurrentlyResearched or false
 
+    local currentTexture, currentTooltip
     --Are the settings to hide items from your bank enabled?
     local settings = FCOCF.settingsVars.settings
     local locVars = FCOCF.locVars
     local localizationVars = FCOCF.localizationVars.FCOCF_loc
     local lastCraftingType = locVars.gLastCraftingType --contains "UniversalDeconstruction" as crafting type if last was UniversalDecon panel
     local lastPanel= locVars.gLastPanel
-
-    local filterApplied = settings.filterApplied[lastCraftingType][lastPanel]
     local isRefinementPanel = (lastPanel == LF_SMITHING_REFINE or lastPanel == LF_JEWELRY_REFINE) or false
+    local filterApplied
 
-    if filterApplied == FCOCF_SHOW_ALL then
-        currentTexture = textureAll
-        currentTooltip = localizationVars["button_FCO_currently_show_all_tooltip"] .. "\n" .. localizationVars["button_FCO_hide_bank_tooltip"]
-    elseif filterApplied == FCOCF_ONLY_SHOW_INVENTORY then
-        currentTexture = textureOnlyInventory
-        if isRefinementPanel == true then
-            if settings.enableMediumFilters then
-                currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_bank_tooltip"]
+    if isResearchShowOnlyCurrentlyResearched then
+        --todo 2023-01-01
+        filterApplied = settings.isCurrentlyResearchedItemFilterEnabled
+        currentTexture = textureCurrentlyResearched
+        currentTooltip = (filterApplied == true and localizationVars["button_FCO_currently_show_only_researched_tooltip"]) or localizationVars["button_FCO_show_all_researched_tooltip"]
+    else
+        --Check the current settings at the given crafting panel and return the next buttons state and texture
+        filterApplied = settings.filterApplied[lastCraftingType][lastPanel]
+
+        if filterApplied == FCOCF_SHOW_ALL then
+            currentTexture = textureAll
+            currentTooltip = localizationVars["button_FCO_currently_show_all_tooltip"] .. "\n" .. localizationVars["button_FCO_hide_bank_tooltip"]
+        elseif filterApplied == FCOCF_ONLY_SHOW_INVENTORY then
+            currentTexture = textureOnlyInventory
+            if isRefinementPanel == true then
+                if settings.enableMediumFilters then
+                    currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_bank_tooltip"]
+                else
+                    currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_craftbag_tooltip"]
+                end
             else
-                currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_craftbag_tooltip"]
+                if settings.enableMediumFilters then
+                    currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_bank_tooltip"]
+                else
+                    currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
+                end
             end
-        else
-            if settings.enableMediumFilters then
-                currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_bank_tooltip"]
+        elseif filterApplied == FCOCF_ONLY_SHOW_BANKED then
+            currentTexture = textureOnlyBank
+            if isRefinementPanel == true then
+                currentTooltip = localizationVars["button_FCO_currently_show_only_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_craftbag_tooltip"]
             else
-                currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
+                currentTooltip = localizationVars["button_FCO_currently_show_only_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
             end
-        end
-    elseif filterApplied == FCOCF_ONLY_SHOW_BANKED then
-        currentTexture = textureOnlyBank
-        if isRefinementPanel == true then
-            currentTooltip = localizationVars["button_FCO_currently_show_only_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_craftbag_tooltip"]
-        else
-            currentTooltip = localizationVars["button_FCO_currently_show_only_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
-        end
-    elseif isRefinementPanel == true then
-        if filterApplied == FCOCF_ONLY_SHOW_CRAFTBAG then
-            currentTexture = textureOnlyCraftBag
-            currentTooltip = localizationVars["button_FCO_currently_show_only_craftbag_tooltip"] .. "\n" .. localizationVars["button_FCO_hide_craftbag_tooltip"]
-        elseif filterApplied == FCOCF_DO_NOT_SHOW_CRAFTBAG then
-            currentTexture = textureNoCraftBag
-            currentTooltip = localizationVars["button_FCO_currently_hide_craftbag_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
+        elseif isRefinementPanel == true then
+            if filterApplied == FCOCF_ONLY_SHOW_CRAFTBAG then
+                currentTexture = textureOnlyCraftBag
+                currentTooltip = localizationVars["button_FCO_currently_show_only_craftbag_tooltip"] .. "\n" .. localizationVars["button_FCO_hide_craftbag_tooltip"]
+            elseif filterApplied == FCOCF_DO_NOT_SHOW_CRAFTBAG then
+                currentTexture = textureNoCraftBag
+                currentTooltip = localizationVars["button_FCO_currently_hide_craftbag_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
+            end
         end
     end
 
@@ -391,6 +405,141 @@ local function hideIncludeBankedItemsCheckbox(filterPanelId, isUniversalDecon)
     end
 end
 
+local function isCurrentlyAnyTraitResearchedFilterFunc(craftingType, lineIndex)
+    --@return name string, icon textureName, numTraits integer, timeRequiredForNextResearchSecs integer
+    local name, icon = GetSmithingResearchLineInfo(craftingType, lineIndex)
+    for traitIndex = 1, GetNumSmithingTraitItems() do
+        --@return duration integer:nilable, timeRemainingSecs integer:nilable
+        local duration, timeRemainingSecs = GetSmithingResearchLineTraitTimes(craftingType, lineIndex, traitIndex)
+        --traitType [ItemTraitType|#ItemTraitType], traitDescription string, known bool
+        local traitType = GetSmithingResearchLineTraitInfo(craftingType, lineIndex, traitIndex)
+        local traitName = GetString("SI_ITEMTRAITTYPE", traitType)
+        if duration ~= nil and duration > 0 and timeRemainingSecs ~= nil and timeRemainingSecs > 0 then
+d("[FCOCF]IsResearched-name: " ..tos(name) .. " " .. tos(traitName) .. ", left: " ..tos(timeRemainingSecs) .. "/" .. tos(duration))
+            return true
+        end
+    end
+    return false
+end
+
+--Clear the custom variables used to filter the horizontal scrolling list entries
+--Attention: This will clear AdvancedFilters registered research panel filters at the horizontal list too!
+local function clearResearchPanelCustomFilters()
+d("[FCOCF]clearResearchPanelCustomFilters")
+    --Reset the custom data for the loop now
+    if controlsForChecks.researchPanel and controlsForChecks.researchPanel.LibFilters_3ResearchLineLoopValues then
+        --controlsForChecks.researchPanel.LibFilters_3ResearchLineLoopValues = nil
+    end
+end
+FCOCF.ClearResearchPanelCustomFilters = clearResearchPanelCustomFilters
+
+
+--Filter a horizontal scroll list and run a filterFunction given to determine the entries to show in the
+--horizontal list afterwards
+local function filterHorizontalScrollList()
+--d(">>>===============================================")
+--d("[FCOCF]filterHorizontalScrollList")
+    local craftingType = GetCraftingInteractionType()
+    if craftingType == CRAFTING_TYPE_INVALID then return false end
+    local filterPanelId = libFilters:GetCurrentFilterType()
+
+    --Check the researchLinIndices for their filterOrEquiupType, armorType and traitType at the current filterPanelId
+    if filterPanelId ~= nil then
+        --Check the current crafting table's research line for the indices and build a "skip table" for LibFilters-3.0
+        local fromResearchLineIndex = 1
+        local toResearchLineIndex = GetNumSmithingResearchLines(craftingType)
+        local skipTable = {}
+
+        --Get the currently set "from", "to" and "skipTable" entries for the same crafting type (e.g. added by AdvancedFilters)
+        local currentResearchLineLoopValues = libFilters:GetCurrentResearchLineLoopValues()
+        if currentResearchLineLoopValues ~= nil and currentResearchLineLoopValues.craftingType ~= nil and currentResearchLineLoopValues.craftingType == craftingType then
+            d("!!!Found existing LibFilters3 researchLineLoop filter!")
+            skipTable = currentResearchLineLoopValues.skipTable
+            fromResearchLineIndex = currentResearchLineLoopValues.from
+            toResearchLineIndex = currentResearchLineLoopValues.to
+        end
+
+        --Check for each possible researchLine at the given crafting station
+        for researchLineIndex = fromResearchLineIndex, toResearchLineIndex do
+            if skipTable[researchLineIndex] == nil then
+                d(">CHECKING researchLineIndex: " ..tos(researchLineIndex) .. ", name: " .. tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex)))
+                --Check if the current research line index is actively researching any trait
+                local researchLineIndexIsAllowed = isCurrentlyAnyTraitResearchedFilterFunc(craftingType, researchLineIndex)
+                --No trait is currently researched at the researchLineIndex? Add it to the skip table
+                if not researchLineIndexIsAllowed then
+                    d(">>SKIPPED NOW")
+                    --if AF.settings.debugSpam then d("<<<<skipping researchLineIndex: " .. tos(researchLineIndex) .. ", name: " ..tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex))) end
+                    skipTable[researchLineIndex] = true
+                end
+            else
+                d(">SKIPPED researchLineIndex: " ..tos(researchLineIndex) .. ", name: " .. tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex)))
+            end
+        end
+
+        --Set the from and to and the skipTable values for the loop "for researchLineIndex = 1, GetNumSmithingResearchLines(craftingType) do"
+        --in function SMITHING.researchPanel.Refresh
+        -->Was overwritten in LibFilters-3.0 helper functions and the function LibFilters3.SetResearchLineLoopValues(from, to, skipTable) was added
+        -->to set the values for your needs
+        libFilters:SetResearchLineLoopValues(fromResearchLineIndex, toResearchLineIndex, skipTable)
+
+        --If all items are filtered now: Hide the currently shown item label and the trait list
+        local researchLineIndicesShown = toResearchLineIndex - fromResearchLineIndex
+        local numFiltered = NonContiguousCount(skipTable)
+        local allItemsFiltered = (numFiltered >= researchLineIndicesShown and true) or false
+
+        ZO_SmithingTopLevelResearchPanelResearchLineListSelectedLabel:SetText("No items researched")
+        local researchSlotNamePrefix = "ZO_SmithingTopLevelResearchPanelZO_SmithingResearchSlot"
+        for traitIndex=1, GetNumSmithingTraitItems() do
+            local researchSlot = GetControl(researchSlotNamePrefix, tos(traitIndex))
+            if researchSlot ~= nil then
+                researchSlot:SetHidden(allItemsFiltered)
+            end
+        end
+    end
+--d("<<<===============================================")
+end
+
+local function isResearchHorizontalScrollbarShown()
+    --if the research panel is currently not shown: Do nothing
+    local currentFilterType = libFilters:GetCurrentFilterType()
+    if currentFilterType == nil or (currentFilterType ~= LF_SMITHING_RESEARCH and currentFilterType ~= LF_JEWELRY_RESEARCH) then return end
+    --local filterTag = tos(GetCraftingInteractionType()) .. "_" .. tos(currentFilterType)
+    local researchHorizontalScrollList = controlsForChecks.researchLineList
+
+    if researchHorizontalScrollList and researchHorizontalScrollList.control and not researchHorizontalScrollList.control:IsHidden() then
+        return true, currentFilterType
+    end
+    return false, currentFilterType
+end
+
+local function callCurrentlyResearchedItemsFilter(doToggle)
+    local isResearchHorizontalScrollbarCurrentlyShown, currentFilterType = isResearchHorizontalScrollbarShown()
+    if not isResearchHorizontalScrollbarCurrentlyShown then return end
+
+    local settings = FCOCF.settingsVars.settings
+    if not settings.showButtonResearchOnlyCurrentlyResearched then return end
+
+    doToggle = doToggle or false
+    if doToggle == true then
+        FCOCF.settingsVars.settings.isCurrentlyResearchedItemFilterEnabled = not FCOCF.settingsVars.settings.isCurrentlyResearchedItemFilterEnabled
+    end
+
+    if settings.isCurrentlyResearchedItemFilterEnabled == true then
+        --Refresh the research horizontal scrollbar
+        filterHorizontalScrollList()
+    else
+        --Unregister the filter at the horizintal scrolllist
+        clearResearchPanelCustomFilters()
+    end
+    --Refresh the research horizontal scrollbar
+    libFilters:RequestUpdateByName("SMITHING_RESEARCH", 0, currentFilterType) --researchPanel:Refresh() --> Will rebuild the list entries and call list:Commit()
+end
+FCOCF.CallCurrentlyResearchedItemsFilter = callCurrentlyResearchedItemsFilter
+
+local function toggleCurrentlyResearchedItemsFilter()
+    callCurrentlyResearchedItemsFilter(true)
+end
+FCOCF.ToggleCurrentlyResearchedItemsFilter = toggleCurrentlyResearchedItemsFilter
 
 -- Build the options menu
 local function BuildAddonMenu()
@@ -508,9 +657,23 @@ local function BuildAddonMenu()
             name = localizationVars["options_enable_medium_filter"],
             tooltip = localizationVars["options_enable_medium_filter_tooltip"],
             getFunc = function() return settings.enableMediumFilters end,
-            setFunc = function(value) settings.enableMediumFilters = not settings.enableMediumFilters
+            setFunc = function(value) settings.enableMediumFilters = value
             end,
             default = settings.enableMediumFilters,
+            width="full",
+        },
+        {
+            type = 'header',
+            name = localizationVars["options_header_research"],
+        },
+        {
+            type = "checkbox",
+            name = localizationVars["options_enable_button_only_currently_researched"],
+            tooltip = localizationVars["options_enable_button_only_currently_researched_tooltip"],
+            getFunc = function() return settings.showButtonResearchOnlyCurrentlyResearched end,
+            setFunc = function(value) settings.showButtonResearchOnlyCurrentlyResearched = value
+            end,
+            default = settings.showButtonResearchOnlyCurrentlyResearched,
             width="full",
         },
     }
@@ -629,7 +792,7 @@ end
 --Callback function for the filter: This function will hide/show the items at the crafting station panel
 --return false: hide the slot
 --return true: show the slot
-local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex, calledFromExternalAddon)
+local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex)
     local locVars = FCOCF.locVars
     local lastPanel = locVars.gLastPanel
     local lastCraftingType = locVars.gLastCraftingType
@@ -868,8 +1031,9 @@ local function FCOCraftFilter_CheckActivePanel(comingFrom, isUniversalDeconShown
 end
 
 --Add a button to an existing parent control
-local function AddButton(parent, name, callbackFunction, text, font, tooltipText, tooltipAlign, width, height, left, top, alignMain, alignBackup, alignControl, hideButton, isUniversalDecon)
+local function AddButton(parent, name, callbackFunction, text, font, tooltipText, tooltipAlign, width, height, left, top, alignMain, alignBackup, alignControl, hideButton, isUniversalDecon, isResearchShowOnlyCurrentlyResearched)
     isUniversalDecon = isUniversalDecon or false
+    isResearchShowOnlyCurrentlyResearched = isResearchShowOnlyCurrentlyResearched or false
 --d("[AddButton] name: " .. name)
     --Abort needed?
     if (not hideButton and (parent == nil or name == nil or callbackFunction == nil
@@ -885,22 +1049,32 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
     --local lastPanel= locVars.gLastPanel
 
 
-    local function colorizeTextureAccordingToFilterApplied(texture, filterApplied, isRefinementPanel)
-        texture:SetColor(1, 1, 1, 1)
-        if isRefinementPanel == true then
-            if filterApplied == FCOCF_DO_NOT_SHOW_CRAFTBAG then
-                texture:SetColor(1, 0, 0, 1)
+    local function colorizeTextureAccordingToFilterApplied(texture, filterApplied, isRefinementPanel, isResearchShowOnlyCurrentlyResearched)
+        isResearchShowOnlyCurrentlyResearched = isResearchShowOnlyCurrentlyResearched or false
+
+        if isResearchShowOnlyCurrentlyResearched == true then
+            if FCOCF.settingsVars.settings.isCurrentlyResearchedItemFilterEnabled == true then
+                texture:SetColor(1, 1, 1, 1)
+            else
+                texture:SetColor(0.85, 0.85, 0.85, 0.5)
+            end
+        else
+            texture:SetColor(1, 1, 1, 1)
+            if isRefinementPanel == true then
+                if filterApplied == FCOCF_DO_NOT_SHOW_CRAFTBAG then
+                    texture:SetColor(1, 0, 0, 1)
+                end
             end
         end
     end
 
     local function updateButtonTextureAndTooltip(buttonControl)
         ZO_Tooltips_HideTextTooltip()
-        local filterApplied, texturePath, tooltipTextForButton, isRefinementPanel = getCurrentButtonStateAndTexture(buttonControl.isUniversalDecon)
+        local filterApplied, texturePath, tooltipTextForButton, isRefinementPanel = getCurrentButtonStateAndTexture(buttonControl.isUniversalDecon, buttonControl.isResearchShowOnlyCurrentlyResearched)
 
         local butnTexture = buttonControl:GetChild(1)
         butnTexture:SetTexture(texturePath)
-        colorizeTextureAccordingToFilterApplied(butnTexture, filterApplied, isRefinementPanel)
+        colorizeTextureAccordingToFilterApplied(butnTexture, filterApplied, isRefinementPanel, buttonControl.isResearchShowOnlyCurrentlyResearched)
         if tooltipText ~= nil and tooltipTextForButton ~= nil then
             tooltipText = locVars.preChatTextGreen .. "\n" .. tooltipTextForButton
             ZO_Tooltips_ShowTextTooltip(buttonControl, tooltipAlign, tooltipText)
@@ -920,6 +1094,7 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
     if button ~= nil then
 ----d(">found button, or created it")
         button.isUniversalDecon = isUniversalDecon
+        button.isResearchShowOnlyCurrentlyResearched = isResearchShowOnlyCurrentlyResearched
 
         --Button should be hidden?
         if hideButton == false then
@@ -950,11 +1125,15 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
 
             else
                 --Do we have seperate textures for the button states?
-                button.showAllTexture       = textureAll
-                button.onlyBankedTexture    = textureOnlyBank
-                button.onlyCraftbagTexture  = textureOnlyCraftBag
-                button.noCraftbagTexture    = textureNoCraftBag
-                button.onlyInventory        = textureOnlyInventory
+                if button.isResearchShowOnlyCurrentlyResearched == true then
+                    button.showAllTexture       = textureCurrentlyResearched
+                else
+                    button.showAllTexture       = textureAll
+                    button.onlyBankedTexture    = textureOnlyBank
+                    button.onlyCraftbagTexture  = textureOnlyCraftBag
+                    button.noCraftbagTexture    = textureNoCraftBag
+                    button.onlyInventory        = textureOnlyInventory
+                end
 
                 --Texture
                 local texture
@@ -966,9 +1145,9 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
                 end
                 texture:SetAnchorFill()
 
-                local filterApplied, texturePath, _, isRefinementPanel = getCurrentButtonStateAndTexture(button.isUniversalDecon)
+                local filterApplied, texturePath, _, isRefinementPanel = getCurrentButtonStateAndTexture(button.isUniversalDecon, button.isResearchShowOnlyCurrentlyResearched)
                 texture:SetTexture(texturePath)
-                colorizeTextureAccordingToFilterApplied(texture, filterApplied, isRefinementPanel)
+                colorizeTextureAccordingToFilterApplied(texture, filterApplied, isRefinementPanel, button.isResearchShowOnlyCurrentlyResearched)
             end
 
             if tooltipAlign == nil then tooltipAlign = TOP end
@@ -1368,6 +1547,7 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
 
     --Get the tooltip state text for the button
     local tooltipVar = ""
+    local tooltipVarCurrentlyResearched = ""
 
 --d(">gLastCraftingType: " .. tos(locVars.gLastCraftingType) .. ", gLastPanel: " ..tos(locVars.gLastPanel))
 
@@ -1389,7 +1569,7 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
     if isUniversalDeconShown == true then
         addFilterButtonUniversalDecon(comingFrom)
     else
-        local craftingType = GetCraftingInteractionType()
+        --local craftingType = GetCraftingInteractionType()
 
         --REFINE
         if comingFrom == LF_SMITHING_REFINE or comingFrom == LF_JEWELRY_REFINE then
@@ -1410,7 +1590,18 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
         elseif comingFrom == LF_SMITHING_RESEARCH or comingFrom == LF_JEWELRY_RESEARCH then
             reanchorResearchControls()
             local xOffset = (isPerfectPixelEnabled == false and -4) or -11
+            --Filter banked/inventory/both items button
             addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_RESEARCH, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS:GetName() .. "ResearchFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, xOffset, 3, RIGHT, LEFT, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TIMER_ICON, false)
+
+            --Filter currently researched items button
+            if FCOCF.currentlyResearchedFilterButton ~= nil and not settings.showButtonResearchOnlyCurrentlyResearched then
+                FCOCF.currentlyResearchedFilterButton:SetHidden(true)
+            end
+            if addedButton ~= nil and settings.showButtonResearchOnlyCurrentlyResearched == true then
+                FCOCF.currentlyResearchedFilterButton = AddButton(zoVars.CRAFTSTATION_SMITHING_RESEARCH, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS:GetName() .. "ResearchFCOCraftFilterHideNotResearchedButton", function(...) toggleCurrentlyResearchedItemsFilter() end, nil, nil, tooltipVarCurrentlyResearched, BOTTOM,  32, 32, -8, 0, TOPRIGHT, TOPLEFT, ZO_SmithingTopLevelResearchPanelResearchLineList, false, false, true)
+                FCOCF.currentlyResearchedFilterButton:SetHidden(false)
+            end
+
             --Research dialog
         elseif comingFrom == LF_SMITHING_RESEARCH_DIALOG or comingFrom == LF_JEWELRY_RESEARCH_DIALOG then
             addedButton = AddButton(zoVars.RESEARCH_POPUP_TOP_DIVIDER, zoVars.RESEARCH_POPUP_TOP_DIVIDER:GetName() .. "ResearchDialogFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, 36, -20, LEFT, LEFT, zoVars.RESEARCH_POPUP_TOP_DIVIDER, false)
@@ -1470,9 +1661,20 @@ local function FCOCraftFilter_CheckIfUniversalDeconIsShownAndAddButton(craftSkil
     end
 end
 
+
 ------------------------------------------------------------------------------------------------------------------------
 --Create the hooks & pre-hooks
 local function FCOCraftFilter_CreateHooks()
+
+    --Hook into AdvancedFilters Updated FilterHorizontalScrollList function to apply the FCOCraftFilter horizontal scroll list afterwards
+    if AdvancedFilters ~= nil then
+        if AdvancedFilters.util.FilterHorizontalScrollList ~= nil then
+            SecurePostHook(AdvancedFilters.util, "FilterHorizontalScrollList", function()
+                callCurrentlyResearchedItemsFilter(false) --no toggle: use current FCOCF settings
+            end)
+        end
+    end
+
     --======== SMITHING =============================================================
     --[[
         --Prehook the smithing function SetMode() which gets executed as the smithing tabs are changed
@@ -1859,6 +2061,8 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
             },
         },
         enableMediumFilters             = true,
+        showButtonResearchOnlyCurrentlyResearched = false,
+        isCurrentlyResearchedItemFilterEnabled = false,
     }
 
 --=============================================================================================================
