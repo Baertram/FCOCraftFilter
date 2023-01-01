@@ -422,13 +422,16 @@ d("[FCOCF]IsResearched-name: " ..tos(name) .. " " .. tos(traitName) .. ", left: 
     return false
 end
 
+FCOCF.lastResearchLineLoopValues = nil
+
 --Clear the custom variables used to filter the horizontal scrolling list entries
 --Attention: This will clear AdvancedFilters registered research panel filters at the horizontal list too!
 local function clearResearchPanelCustomFilters()
 d("[FCOCF]clearResearchPanelCustomFilters")
-    --Reset the custom data for the loop now
-    if controlsForChecks.researchPanel and controlsForChecks.researchPanel.LibFilters_3ResearchLineLoopValues then
-        --controlsForChecks.researchPanel.LibFilters_3ResearchLineLoopValues = nil
+    --Reset the custom data for the loop now but only reset to values of any other addon, which was saved as function
+    --filterHorizontalScrollList()
+    if controlsForChecks.researchPanel and controlsForChecks.researchPanel.LibFilters_3ResearchLineLoopValues == nil then
+        controlsForChecks.researchPanel.LibFilters_3ResearchLineLoopValues = FCOCF.lastResearchLineLoopValues
     end
 end
 FCOCF.ClearResearchPanelCustomFilters = clearResearchPanelCustomFilters
@@ -437,8 +440,8 @@ FCOCF.ClearResearchPanelCustomFilters = clearResearchPanelCustomFilters
 --Filter a horizontal scroll list and run a filterFunction given to determine the entries to show in the
 --horizontal list afterwards
 local function filterHorizontalScrollList()
---d(">>>===============================================")
---d("[FCOCF]filterHorizontalScrollList")
+d(">>>===============================================")
+d("[FCOCF]filterHorizontalScrollList")
     local craftingType = GetCraftingInteractionType()
     if craftingType == CRAFTING_TYPE_INVALID then return false end
     local filterPanelId = libFilters:GetCurrentFilterType()
@@ -449,11 +452,19 @@ local function filterHorizontalScrollList()
         local fromResearchLineIndex = 1
         local toResearchLineIndex = GetNumSmithingResearchLines(craftingType)
         local skipTable = {}
+        local additionalData = {
+            addonName = addonName
+        }
 
         --Get the currently set "from", "to" and "skipTable" entries for the same crafting type (e.g. added by AdvancedFilters)
         local currentResearchLineLoopValues = libFilters:GetCurrentResearchLineLoopValues()
         if currentResearchLineLoopValues ~= nil and currentResearchLineLoopValues.craftingType ~= nil and currentResearchLineLoopValues.craftingType == craftingType then
-            d("!!!Found existing LibFilters3 researchLineLoop filter!")
+d("!!!Found existing LibFilters3 researchLineLoop filter!")
+            if currentResearchLineLoopValues.additionalData == nil or currentResearchLineLoopValues.additionalData.addonName == nil
+                or currentResearchLineLoopValues.additionalData.addonName ~= addonName then
+                --Save the last used "other addon" applied reserchLineLoop data for later "reset" at function clearResearchPanelCustomFilters
+                FCOCF.lastResearchLineLoopValues = currentResearchLineLoopValues
+            end
             skipTable = currentResearchLineLoopValues.skipTable
             fromResearchLineIndex = currentResearchLineLoopValues.from
             toResearchLineIndex = currentResearchLineLoopValues.to
@@ -480,14 +491,15 @@ local function filterHorizontalScrollList()
         --in function SMITHING.researchPanel.Refresh
         -->Was overwritten in LibFilters-3.0 helper functions and the function LibFilters3.SetResearchLineLoopValues(from, to, skipTable) was added
         -->to set the values for your needs
-        libFilters:SetResearchLineLoopValues(fromResearchLineIndex, toResearchLineIndex, skipTable)
+        libFilters:SetResearchLineLoopValues(fromResearchLineIndex, toResearchLineIndex, skipTable, additionalData)
 
         --If all items are filtered now: Hide the currently shown item label and the trait list
         local researchLineIndicesShown = toResearchLineIndex - fromResearchLineIndex
         local numFiltered = NonContiguousCount(skipTable)
         local allItemsFiltered = (numFiltered >= researchLineIndicesShown and true) or false
-
-        ZO_SmithingTopLevelResearchPanelResearchLineListSelectedLabel:SetText("No items researched")
+        if allItemsFiltered == true then
+            ZO_SmithingTopLevelResearchPanelResearchLineListSelectedLabel:SetText(FCOCF.localizationVars.FCOCF_loc["info_no_items_researched"])
+        end
         local researchSlotNamePrefix = "ZO_SmithingTopLevelResearchPanelZO_SmithingResearchSlot"
         for traitIndex=1, GetNumSmithingTraitItems() do
             local researchSlot = GetControl(researchSlotNamePrefix, tos(traitIndex))
@@ -534,12 +546,12 @@ local function callCurrentlyResearchedItemsFilter(doToggle)
     --Refresh the research horizontal scrollbar
     libFilters:RequestUpdateByName("SMITHING_RESEARCH", 0, currentFilterType) --researchPanel:Refresh() --> Will rebuild the list entries and call list:Commit()
 end
-FCOCF.CallCurrentlyResearchedItemsFilter = callCurrentlyResearchedItemsFilter
+--FCOCF.CallCurrentlyResearchedItemsFilter = callCurrentlyResearchedItemsFilter
 
 local function toggleCurrentlyResearchedItemsFilter()
     callCurrentlyResearchedItemsFilter(true)
 end
-FCOCF.ToggleCurrentlyResearchedItemsFilter = toggleCurrentlyResearchedItemsFilter
+--FCOCF.ToggleCurrentlyResearchedItemsFilter = toggleCurrentlyResearchedItemsFilter
 
 -- Build the options menu
 local function BuildAddonMenu()

@@ -49,6 +49,7 @@ FCOCF.localizationVars.localizationAll = {
         ["options_enable_button_only_currently_researched_tooltip"] = "Show a filter button at the research panel of crafting tables to switch between 'Currently researched' and 'All' items",
         ["button_FCO_show_all_researched_tooltip"] = "Currently: Show all researchable items",
         ["button_FCO_currently_show_only_researched_tooltip"] = "Currently: Show at the moment researched items",
+        ["info_no_items_researched"] = "Currently nothing is researched",
 
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
@@ -96,6 +97,7 @@ FCOCF.localizationVars.localizationAll = {
         ["options_enable_button_only_currently_researched_tooltip"] = "Zeige einen Filter Knopf am Analyse Panel mit welchem du zwischen den 'Gerade analysierten' und 'Allen' Gegenständen umschalten kannst",
         ["button_FCO_show_all_researched_tooltip"] = "Aktuell: Zeige alle Analyse Gegenstände",
         ["button_FCO_currently_show_only_researched_tooltip"] = "Aktuell: Zeige nur gerade analysierte Gegenstände",
+        ["info_no_items_researched"] = "Zur Zeit wird nichts analysiert",
 
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
