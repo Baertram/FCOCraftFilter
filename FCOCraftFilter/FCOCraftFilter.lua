@@ -249,7 +249,8 @@ local textureOnlyInventory  = "/esoui/art/mainmenu/menubar_inventory_up.dds"
 local textureOnlyBank       = "/esoui/art/icons/servicemappins/servicepin_bank.dds"
 local textureOnlyCraftBag   = "/esoui/art/inventory/inventory_tabicon_craftbag_down.dds"
 local textureNoCraftBag     = "/esoui/art/hud/gamepad/gp_loothistory_icon_craftbag.dds"
-local textureCurrentlyResearched = "/esoui/art/crafting/smithing_tabicon_research_disabled.dds"
+local textureCurrentlyResearchedDown = "/esoui/art/crafting/smithing_tabicon_research_disabled.dds"
+local textureCurrentlyResearched = "/esoui/art/tutorial/smithing_tabicon_research_up.dds"
 
 --===================== FUNCTIONS ==============================================
 
@@ -270,7 +271,7 @@ local function getCurrentButtonStateAndTexture(isUniversalDecon, isResearchShowO
     if isResearchShowOnlyCurrentlyResearched then
         --todo 2023-01-01
         filterApplied = settings.isCurrentlyResearchedItemFilterEnabled
-        currentTexture = textureCurrentlyResearched
+        currentTexture = (filterApplied == true and textureCurrentlyResearchedDown or textureCurrentlyResearched)
         currentTooltip = (filterApplied == true and localizationVars["button_FCO_currently_show_only_researched_tooltip"]) or localizationVars["button_FCO_show_all_researched_tooltip"]
     else
         --Check the current settings at the given crafting panel and return the next buttons state and texture
@@ -415,7 +416,7 @@ local function isCurrentlyAnyTraitResearchedFilterFunc(craftingType, lineIndex)
         local traitType = GetSmithingResearchLineTraitInfo(craftingType, lineIndex, traitIndex)
         local traitName = GetString("SI_ITEMTRAITTYPE", traitType)
         if duration ~= nil and duration > 0 and timeRemainingSecs ~= nil and timeRemainingSecs > 0 then
-d("[FCOCF]IsResearched-name: " ..tos(name) .. " " .. tos(traitName) .. ", left: " ..tos(timeRemainingSecs) .. "/" .. tos(duration))
+--d("[FCOCF]IsResearched-name: " ..tos(name) .. " " .. tos(traitName) .. ", left: " ..tos(timeRemainingSecs) .. "/" .. tos(duration))
             return true
         end
     end
@@ -428,7 +429,7 @@ FCOCF.lastResearchLineLoopValues = nil
 --Attention: This will clear AdvancedFilters registered research panel filters at the horizontal list too!
 local function clearResearchPanelCustomFilters(craftingType)
     craftingType = craftingType or GetCraftingInteractionType()
-d("[FCOCF]clearResearchPanelCustomFilters-craftingType: " ..tos(craftingType))
+--d("[FCOCF]clearResearchPanelCustomFilters-craftingType: " ..tos(craftingType))
     --Reset the custom data for the loop now but only reset to values of any other addon, which was saved as function
     --filterHorizontalScrollList()
     --[[
@@ -445,8 +446,8 @@ FCOCF.ClearResearchPanelCustomFilters = clearResearchPanelCustomFilters
 --horizontal list afterwards
 local noItemsCurrentlyResearchedStr
 local function filterHorizontalScrollList()
-d(">>>===============================================")
-d("[FCOCF]filterHorizontalScrollList")
+--d(">>>===============================================")
+--d("[FCOCF]filterHorizontalScrollList")
     local craftingType = GetCraftingInteractionType()
     if craftingType == CRAFTING_TYPE_INVALID then return false end
     local filterPanelId = libFilters:GetCurrentFilterType()
@@ -513,6 +514,7 @@ d(">>saved other addon's FCOCF.lastResearchLineLoopValues")
 --d("<<<===============================================")
 end
 
+--[[
 local function isResearchHorizontalScrollbarShown()
     --if the research panel is currently not shown: Do nothing
     local currentFilterType = libFilters:GetCurrentFilterType()
@@ -525,10 +527,11 @@ local function isResearchHorizontalScrollbarShown()
     end
     return false, currentFilterType
 end
+]]
 
 local function callCurrentlyResearchedItemsFilter(doToggle)
-    local isResearchHorizontalScrollbarCurrentlyShown, currentFilterType = isResearchHorizontalScrollbarShown()
-    if not isResearchHorizontalScrollbarCurrentlyShown then return end
+--d("[FCOCF]callCurrentlyResearchedItemsFilter-doToggle: " ..tos(doToggle))
+    if not libFilters:IsResearchShown() then return end
 
     local settings = FCOCF.settingsVars.settings
     if not settings.showButtonResearchOnlyCurrentlyResearched then return end
@@ -555,6 +558,7 @@ end
 FCOCF.CallCurrentlyResearchedItemsFilter = callCurrentlyResearchedItemsFilter
 
 local function toggleCurrentlyResearchedItemsFilter()
+--d("[FCOCF]toggleCurrentlyResearchedItemsFilter")
     callCurrentlyResearchedItemsFilter(true)
 end
 --FCOCF.ToggleCurrentlyResearchedItemsFilter = toggleCurrentlyResearchedItemsFilter
@@ -1072,9 +1076,9 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
 
         if isResearchShowOnlyCurrentlyResearched == true then
             if FCOCF.settingsVars.settings.isCurrentlyResearchedItemFilterEnabled == true then
-                texture:SetColor(1, 1, 1, 1)
+                texture:SetColor(0, 1, 0, 0.4)
             else
-                texture:SetColor(0.85, 0.85, 0.85, 0.5)
+                texture:SetColor(1, 1, 1, 1)
             end
         else
             texture:SetColor(1, 1, 1, 1)
@@ -1757,6 +1761,8 @@ local function FCOCraftFilter_CreateHooks()
             zo_callLater(function()
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING research SetMode")
                 reanchorResearchControls()
+
+                callCurrentlyResearchedItemsFilter()
             end, 10)
             --[[
                     --Research
