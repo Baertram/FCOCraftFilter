@@ -429,7 +429,7 @@ FCOCF.lastResearchLineLoopValues = nil
 --Attention: This will clear AdvancedFilters registered research panel filters at the horizontal list too!
 local function clearResearchPanelCustomFilters(craftingType)
     craftingType = craftingType or GetCraftingInteractionType()
---d("[FCOCF]clearResearchPanelCustomFilters-craftingType: " ..tos(craftingType))
+d("[FCOCF]clearResearchPanelCustomFilters-craftingType: " ..tos(craftingType))
     --Reset the custom data for the loop now but only reset to values of any other addon, which was saved as function
     --filterHorizontalScrollList()
     --[[
@@ -446,8 +446,8 @@ FCOCF.ClearResearchPanelCustomFilters = clearResearchPanelCustomFilters
 --horizontal list afterwards
 local noItemsCurrentlyResearchedStr
 local function filterHorizontalScrollList()
---d(">>>===============================================")
---d("[FCOCF]filterHorizontalScrollList")
+d(">>>===============================================")
+d("[FCOCF]filterHorizontalScrollList")
     local craftingType = GetCraftingInteractionType()
     if craftingType == CRAFTING_TYPE_INVALID then return false end
     local filterPanelId = libFilters:GetCurrentFilterType()
@@ -461,57 +461,32 @@ local function filterHorizontalScrollList()
         local fromResearchLineIndex = 1
         local toResearchLineIndex = GetNumSmithingResearchLines(craftingType)
         local skipTable = {}
-        --[[
-        local additionalData = {
-            addonName = addonName
-        }
-        ]]
-
-        --Get the currently set "from", "to" and "skipTable" entries for the same crafting type (e.g. added by AdvancedFilters)
-        --[[
-        local currentResearchLineLoopValues = libFilters:GetCurrentResearchLineLoopValues()
-        if currentResearchLineLoopValues ~= nil and currentResearchLineLoopValues.craftingType ~= nil and currentResearchLineLoopValues.craftingType == craftingType then
-d("!!!Found existing LibFilters3 researchLineLoop filter!")
-            if currentResearchLineLoopValues.additionalData == nil or currentResearchLineLoopValues.additionalData.addonName == nil
-                or currentResearchLineLoopValues.additionalData.addonName ~= addonName then
-d(">>saved other addon's FCOCF.lastResearchLineLoopValues")
-
-                --Save the last used "other addon" applied reserchLineLoop data for later "reset" at function clearResearchPanelCustomFilters
-                FCOCF.lastResearchLineLoopValues = currentResearchLineLoopValues
-            end
-            skipTable = currentResearchLineLoopValues.skipTable
-            fromResearchLineIndex = currentResearchLineLoopValues.from
-            toResearchLineIndex = currentResearchLineLoopValues.to
-        end
-        ]]
 
         --Check for each possible researchLine at the given crafting station
         for researchLineIndex = fromResearchLineIndex, toResearchLineIndex do
-            --if skipTable[researchLineIndex] == nil then
-                --d(">CHECKING researchLineIndex: " ..tos(researchLineIndex) .. ", name: " .. tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex)))
-                --Check if the current research line index is actively researching any trait
-                local researchLineIndexIsAllowed = isCurrentlyAnyTraitResearchedFilterFunc(craftingType, researchLineIndex)
-                --No trait is currently researched at the researchLineIndex? Add it to the skip table
-                if not researchLineIndexIsAllowed then
-                    --d(">>SKIPPED NOW")
-                    --if AF.settings.debugSpam then d("<<<<skipping researchLineIndex: " .. tos(researchLineIndex) .. ", name: " ..tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex))) end
-                    skipTable[researchLineIndex] = true
-                end
-            --else
-            --    d(">SKIPPED researchLineIndex: " ..tos(researchLineIndex) .. ", name: " .. tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex)))
-            --end
+            d(">CHECKING researchLineIndex: " ..tos(researchLineIndex) .. ", name: " .. tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex)))
+            --Check if the current research line index is actively researching any trait
+            local researchLineIndexIsAllowed = isCurrentlyAnyTraitResearchedFilterFunc(craftingType, researchLineIndex)
+            --No trait is currently researched at the researchLineIndex? Add it to the skip table
+            if not researchLineIndexIsAllowed then
+    d(">>SKIPPED NOW")
+                --if AF.settings.debugSpam then d("<<<<skipping researchLineIndex: " .. tos(researchLineIndex) .. ", name: " ..tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex))) end
+                skipTable[researchLineIndex] = true
+            end
         end
 
-        --Set the from and to and the skipTable values for the loop "for researchLineIndex = 1, GetNumSmithingResearchLines(craftingType) do"
-        --in function SMITHING.researchPanel.Refresh
-        -->Was overwritten in LibFilters-3.0 helper functions and the function LibFilters3.SetResearchLineLoopValues(from, to, skipTable) was added
-        -->to set the values for your needs
-        --libFilters:SetResearchLineLoopValues(fromResearchLineIndex, toResearchLineIndex, skipTable, additionalData)
-        --This will update the registered filter (skipTable) but it won't refresh the researchPanel! This needs to be manually done via
-        --libFilters:RequestUpdateForResearchFilters(0)
-        libFilters:RegisterResearchHorizontalScrollbarFilter("FCOCraftFilter_ResearchHorizontalScrollBarFilter", craftingType, skipTable, fromResearchLineIndex, toResearchLineIndex)
+        if NonContiguousCount(skipTable) > 0 then
+            --Set the from and to and the skipTable values for the loop "for researchLineIndex = 1, GetNumSmithingResearchLines(craftingType) do"
+            --in function SMITHING.researchPanel.Refresh
+            -->Was overwritten in LibFilters-3.0 helper functions and the function LibFilters3.SetResearchLineLoopValues(from, to, skipTable) was added
+            -->to set the values for your needs
+            --libFilters:SetResearchLineLoopValues(fromResearchLineIndex, toResearchLineIndex, skipTable, additionalData)
+            --This will update the registered filter (skipTable) but it won't refresh the researchPanel! This needs to be manually done via
+            --libFilters:RequestUpdateForResearchFilters(0)
+            libFilters:RegisterResearchHorizontalScrollbarFilter("FCOCraftFilter_ResearchHorizontalScrollBarFilter", craftingType, skipTable, fromResearchLineIndex, toResearchLineIndex)
+        end
     end
---d("<<<===============================================")
+d("<<<===============================================")
 end
 
 --[[
@@ -530,7 +505,7 @@ end
 ]]
 
 local function callCurrentlyResearchedItemsFilter(doToggle)
---d("[FCOCF]callCurrentlyResearchedItemsFilter-doToggle: " ..tos(doToggle))
+d("[FCOCF]callCurrentlyResearchedItemsFilter-doToggle: " ..tos(doToggle))
     if not libFilters:IsResearchShown() then return end
 
     local settings = FCOCF.settingsVars.settings
@@ -539,6 +514,13 @@ local function callCurrentlyResearchedItemsFilter(doToggle)
     doToggle = doToggle or false
     if doToggle == true then
         FCOCF.settingsVars.settings.isCurrentlyResearchedItemFilterEnabled = not FCOCF.settingsVars.settings.isCurrentlyResearchedItemFilterEnabled
+        --If AdvancedFilters is enabled. Let it's filter apply first, after that call FCOCraftFilter functions from AF's function AdvancedFilters.util.FilterHorizontalScrollList
+        if AdvancedFilters ~= nil then
+            --AdvancedFilters.util.CheckForResearchPanelAndRunFilterFunction(true, nil, nil, nil)
+            --Get the currently active AdvancedFilters subFilterBar and run apply it's currents horizontal scroll list filterCallbacks
+            AdvancedFilters.util.CheckForResearchPanelAndRunCurrentSubfilterBarsFilterFunctions()
+            return
+        end
     end
 
     if settings.isCurrentlyResearchedItemFilterEnabled == true then
