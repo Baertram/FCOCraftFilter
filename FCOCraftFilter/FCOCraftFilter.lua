@@ -429,7 +429,7 @@ FCOCF.lastResearchLineLoopValues = nil
 --Attention: This will clear AdvancedFilters registered research panel filters at the horizontal list too!
 local function clearResearchPanelCustomFilters(craftingType)
     craftingType = craftingType or GetCraftingInteractionType()
-d("[FCOCF]clearResearchPanelCustomFilters-craftingType: " ..tos(craftingType))
+--d("[FCOCF]clearResearchPanelCustomFilters-craftingType: " ..tos(craftingType))
     --Reset the custom data for the loop now but only reset to values of any other addon, which was saved as function
     --filterHorizontalScrollList()
     --[[
@@ -446,8 +446,8 @@ FCOCF.ClearResearchPanelCustomFilters = clearResearchPanelCustomFilters
 --horizontal list afterwards
 local noItemsCurrentlyResearchedStr
 local function filterHorizontalScrollList()
-d(">>>===============================================")
-d("[FCOCF]filterHorizontalScrollList")
+--d(">>>===============================================")
+--d("[FCOCF]filterHorizontalScrollList")
     local craftingType = GetCraftingInteractionType()
     if craftingType == CRAFTING_TYPE_INVALID then return false end
     local filterPanelId = libFilters:GetCurrentFilterType()
@@ -464,12 +464,12 @@ d("[FCOCF]filterHorizontalScrollList")
 
         --Check for each possible researchLine at the given crafting station
         for researchLineIndex = fromResearchLineIndex, toResearchLineIndex do
-            d(">CHECKING researchLineIndex: " ..tos(researchLineIndex) .. ", name: " .. tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex)))
+            --d(">CHECKING researchLineIndex: " ..tos(researchLineIndex) .. ", name: " .. tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex)))
             --Check if the current research line index is actively researching any trait
             local researchLineIndexIsAllowed = isCurrentlyAnyTraitResearchedFilterFunc(craftingType, researchLineIndex)
             --No trait is currently researched at the researchLineIndex? Add it to the skip table
             if not researchLineIndexIsAllowed then
-    d(">>SKIPPED NOW")
+    --d(">>SKIPPED NOW")
                 --if AF.settings.debugSpam then d("<<<<skipping researchLineIndex: " .. tos(researchLineIndex) .. ", name: " ..tos(GetSmithingResearchLineInfo(craftingType, researchLineIndex))) end
                 skipTable[researchLineIndex] = true
             end
@@ -486,7 +486,7 @@ d("[FCOCF]filterHorizontalScrollList")
             libFilters:RegisterResearchHorizontalScrollbarFilter("FCOCraftFilter_ResearchHorizontalScrollBarFilter", craftingType, skipTable, fromResearchLineIndex, toResearchLineIndex)
         end
     end
-d("<<<===============================================")
+--d("<<<===============================================")
 end
 
 --[[
@@ -505,7 +505,7 @@ end
 ]]
 
 local function callCurrentlyResearchedItemsFilter(doToggle)
-d("[FCOCF]callCurrentlyResearchedItemsFilter-doToggle: " ..tos(doToggle))
+--d("[FCOCF]callCurrentlyResearchedItemsFilter-doToggle: " ..tos(doToggle))
     if not libFilters:IsResearchShown() then return end
 
     local settings = FCOCF.settingsVars.settings
