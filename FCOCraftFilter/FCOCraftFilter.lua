@@ -74,6 +74,7 @@ FCOCF.locVars.preChatTextRed = "|cDD2222"..FCOCF.locVars.preChatText.."|r "
 FCOCF.locVars.preChatTextBlue = "|c2222DD"..FCOCF.locVars.preChatText.."|r "
 
 FCOCF.filterButtons = {}
+FCOCF.horizontalScrollListFilterButtons = {}
 
 --Control names of ZO* standard controls etc.
 FCOCF.zoVars = {}
@@ -231,6 +232,7 @@ FCOCF.GetCurrentCraftingFilterTypeReference = getCurrentCraftingFilterTypeRefere
 FCOCF.settingsVars			    = {}
 FCOCF.settingsVars.settings       = {}
 FCOCF.settingsVars.defaultSettings= {}
+FCOCF.settingsVars.defaults = {}
 
 --Preventer variables
 FCOCF.preventerVars = {}
@@ -261,16 +263,15 @@ local function getCurrentButtonStateAndTexture(isUniversalDecon, isResearchShowO
     local currentTexture, currentTooltip
     --Are the settings to hide items from your bank enabled?
     local settings = FCOCF.settingsVars.settings
-    local locVars = FCOCF.locVars
     local localizationVars = FCOCF.localizationVars.FCOCF_loc
+    local locVars = FCOCF.locVars
     local lastCraftingType = locVars.gLastCraftingType --contains "UniversalDeconstruction" as crafting type if last was UniversalDecon panel
     local lastPanel= locVars.gLastPanel
     local isRefinementPanel = (lastPanel == LF_SMITHING_REFINE or lastPanel == LF_JEWELRY_REFINE) or false
     local filterApplied
 
     if isResearchShowOnlyCurrentlyResearched then
-        --todo 2023-01-01
-        filterApplied = settings.isCurrentlyResearchedItemFilterEnabled
+        filterApplied = settings.horizontalScrollBarFilterApplied[lastCraftingType][lastPanel]
         currentTexture = (filterApplied == true and textureCurrentlyResearchedDown or textureCurrentlyResearched)
         currentTooltip = (filterApplied == true and localizationVars["button_FCO_currently_show_only_researched_tooltip"]) or localizationVars["button_FCO_show_all_researched_tooltip"]
     else
@@ -425,30 +426,30 @@ end
 
 FCOCF.lastResearchLineLoopValues = nil
 
---Clear the custom variables used to filter the horizontal scrolling list entries
---Attention: This will clear AdvancedFilters registered research panel filters at the horizontal list too!
+--Clear the custom variables used to filter the horizontal scrolling list entries at a given craftingType
 local function clearResearchPanelCustomFilters(craftingType)
     craftingType = craftingType or GetCraftingInteractionType()
---d("[FCOCF]clearResearchPanelCustomFilters-craftingType: " ..tos(craftingType))
-    --Reset the custom data for the loop now but only reset to values of any other addon, which was saved as function
-    --filterHorizontalScrollList()
-    --[[
-    if controlsForChecks.researchPanel then
-        controlsForChecks.researchPanel.LibFilters_3ResearchLineLoopValues = FCOCF.lastResearchLineLoopValues
-    end
-    ]]
     libFilters:UnregisterResearchHorizontalScrollbarFilter("FCOCraftFilter_ResearchHorizontalScrollBarFilter", craftingType)
 end
 FCOCF.ClearResearchPanelCustomFilters = clearResearchPanelCustomFilters
 
+--Clear the custom variables used to filter the horizontal scrolling list entries at all craftingTypes which got filters registered
+local function clearResearchPanelCustomFiltersAtAllCraftingTypes()
+    local defaults = FCOCF.settingsVars.defaults
+    if defaults == nil then return end
+    local horizontalScrollBarFilterAppliedCraftingTypes = defaults.horizontalScrollBarFilterApplied
+    if horizontalScrollBarFilterAppliedCraftingTypes == nil then return end
+    for craftingType, _ in pairs(horizontalScrollBarFilterAppliedCraftingTypes) do
+        libFilters:UnregisterResearchHorizontalScrollbarFilter("FCOCraftFilter_ResearchHorizontalScrollBarFilter", craftingType)
+    end
+end
 
 --Filter a horizontal scroll list and run a filterFunction given to determine the entries to show in the
 --horizontal list afterwards
-local noItemsCurrentlyResearchedStr
-local function filterHorizontalScrollList()
+local function filterHorizontalScrollList(craftingType)
 --d(">>>===============================================")
 --d("[FCOCF]filterHorizontalScrollList")
-    local craftingType = GetCraftingInteractionType()
+    craftingType = craftingType or GetCraftingInteractionType()
     if craftingType == CRAFTING_TYPE_INVALID then return false end
     local filterPanelId = libFilters:GetCurrentFilterType()
 
@@ -505,15 +506,31 @@ end
 ]]
 
 local function callCurrentlyResearchedItemsFilter(doToggle)
---d("[FCOCF]callCurrentlyResearchedItemsFilter-doToggle: " ..tos(doToggle))
+    local locVars = FCOCF.locVars
+    local lastCraftingType = locVars.gLastCraftingType --contains "UniversalDeconstruction" as crafting type if last was UniversalDecon panel
+    local lastPanel= locVars.gLastPanel
+    --d("[FCOCF]callCurrentlyResearchedItemsFilter-doToggle: " ..tos(doToggle) .. ", lastCraftingType: " ..tos(lastCraftingType) .. ", lastPanel: " .. tos(lastPanel))
     if not libFilters:IsResearchShown() then return end
 
     local settings = FCOCF.settingsVars.settings
-    if not settings.showButtonResearchOnlyCurrentlyResearched then return end
+    --Abort and unregister current filters if button is disabled or settings are missing
+    if not settings.showButtonResearchOnlyCurrentlyResearched then
+        --Unregister the filter at all craftingTypes of the horizintal scrolllists
+        clearResearchPanelCustomFiltersAtAllCraftingTypes()
+        return
+    end
+    if settings.horizontalScrollBarFilterApplied[lastCraftingType] == nil or settings.horizontalScrollBarFilterApplied[lastCraftingType][lastPanel] == nil then
+        --Unregister the filter at the current horizintal scrolllist
+        clearResearchPanelCustomFilters(lastCraftingType)
+        return
+    end
 
     doToggle = doToggle or false
     if doToggle == true then
-        FCOCF.settingsVars.settings.isCurrentlyResearchedItemFilterEnabled = not FCOCF.settingsVars.settings.isCurrentlyResearchedItemFilterEnabled
+        FCOCF.settingsVars.settings.horizontalScrollBarFilterApplied[lastCraftingType][lastPanel] = not FCOCF.settingsVars.settings.horizontalScrollBarFilterApplied[lastCraftingType][lastPanel]
+
+
+        ------- -v- OTHER ADDON: AdvancedFilters -v- -----------------------------------------------------------------------------------
         --If AdvancedFilters is enabled. Let it's filter apply first, after that call FCOCraftFilter functions from AF's function AdvancedFilters.util.FilterHorizontalScrollList
         if AdvancedFilters ~= nil then
             --AdvancedFilters.util.CheckForResearchPanelAndRunFilterFunction(true, nil, nil, nil)
@@ -521,14 +538,15 @@ local function callCurrentlyResearchedItemsFilter(doToggle)
             AdvancedFilters.util.CheckForResearchPanelAndRunCurrentSubfilterBarsFilterFunctions()
             return
         end
+        ------- -^- OTHER ADDON: AdvancedFilters -^- -----------------------------------------------------------------------------------
     end
 
-    if settings.isCurrentlyResearchedItemFilterEnabled == true then
+    if FCOCF.settingsVars.settings.horizontalScrollBarFilterApplied[lastCraftingType][lastPanel] == true then
         --Refresh the research horizontal scrollbar
-        filterHorizontalScrollList()
+        filterHorizontalScrollList(lastCraftingType)
     else
         --Unregister the filter at the horizintal scrolllist
-        clearResearchPanelCustomFilters()
+        clearResearchPanelCustomFilters(lastCraftingType)
     end
     --Refresh the research horizontal scrollbar
     --libFilters:RequestUpdateByName("SMITHING_RESEARCH", 0, currentFilterType) --researchPanel:Refresh() --> Will rebuild the list entries and call list:Commit()
@@ -1057,7 +1075,7 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
         isResearchShowOnlyCurrentlyResearched = isResearchShowOnlyCurrentlyResearched or false
 
         if isResearchShowOnlyCurrentlyResearched == true then
-            if FCOCF.settingsVars.settings.isCurrentlyResearchedItemFilterEnabled == true then
+            if filterApplied == true then
                 texture:SetColor(0, 1, 0, 0.4)
             else
                 texture:SetColor(1, 1, 1, 1)
@@ -1401,6 +1419,9 @@ local function FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation)
     --Remember the current crafting station type
     FCOCF.locVars.gLastCraftingType = craftSkill
 
+    --Remove the filters at the horizontal scroll lists at all crafting tables
+    clearResearchPanelCustomFiltersAtAllCraftingTypes()
+
 ----d(">FCOCF.locVars.gLastCraftingType: " ..tos(FCOCF.locVars.gLastCraftingType))
     --Is the craftSkill not valid then it could be the retrait station.
     --Check if the retrait station is shown and add the button now
@@ -1413,6 +1434,10 @@ local function FCOCraftFilter_OnCloseCrafting(...)
     local locVars = FCOCF.locVars
     if locVars.gLastPanel == nil then return false end
     FCOCraftFilter_UnregisterFilter(locVars.gLastCraftingType .. "_" .. locVars.gLastPanel, locVars.gLastPanel)
+
+    --Remove the filters at the horizontal scroll lists at all crafting tables
+    clearResearchPanelCustomFiltersAtAllCraftingTypes()
+
     --Reset the last crafting station type
     FCOCF.locVars.gLastCraftingType = nil
 end
@@ -1553,6 +1578,10 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
     local tooltipVar = ""
     local tooltipVarCurrentlyResearched = ""
 
+    --The current crafing type and the filterPanel
+    local lastCraftingType = locVars.gLastCraftingType
+    local lastPanel = locVars.gLastPanel
+
 --d(">gLastCraftingType: " .. tos(locVars.gLastCraftingType) .. ", gLastPanel: " ..tos(locVars.gLastPanel))
 
     --1. /EsoUI/Art/Inventory/inventory_tabIcon_items_up.dds
@@ -1598,12 +1627,13 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
             addedButton = AddButton(zoVars.CRAFTSTATION_SMITHING_RESEARCH, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS:GetName() .. "ResearchFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, xOffset, 3, RIGHT, LEFT, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TIMER_ICON, false)
 
             --Filter currently researched items button
-            if FCOCF.currentlyResearchedFilterButton ~= nil and not settings.showButtonResearchOnlyCurrentlyResearched then
-                FCOCF.currentlyResearchedFilterButton:SetHidden(true)
+            local showButtonResearchOnlyCurrentlyResearched = settings.showButtonResearchOnlyCurrentlyResearched
+            if FCOCF.horizontalScrollListFilterButtons[comingFrom] ~= nil and not showButtonResearchOnlyCurrentlyResearched then
+                FCOCF.horizontalScrollListFilterButtons[comingFrom]:SetHidden(true)
             end
-            if addedButton ~= nil and settings.showButtonResearchOnlyCurrentlyResearched == true then
-                FCOCF.currentlyResearchedFilterButton = AddButton(zoVars.CRAFTSTATION_SMITHING_RESEARCH, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS:GetName() .. "ResearchFCOCraftFilterHideNotResearchedButton", function(...) toggleCurrentlyResearchedItemsFilter() end, nil, nil, tooltipVarCurrentlyResearched, BOTTOM,  32, 32, -8, 0, TOPRIGHT, TOPLEFT, ZO_SmithingTopLevelResearchPanelResearchLineList, false, false, true)
-                FCOCF.currentlyResearchedFilterButton:SetHidden(false)
+            if addedButton ~= nil and showButtonResearchOnlyCurrentlyResearched== true then
+                FCOCF.horizontalScrollListFilterButtons[comingFrom] = AddButton(zoVars.CRAFTSTATION_SMITHING_RESEARCH, zoVars.CRAFTSTATION_SMITHING_RESEARCH_TABS:GetName() .. "ResearchFCOCraftFilterHideNotResearchedButton", function(...) toggleCurrentlyResearchedItemsFilter() end, nil, nil, tooltipVarCurrentlyResearched, BOTTOM,  32, 32, -8, 0, TOPRIGHT, TOPLEFT, ZO_SmithingTopLevelResearchPanelResearchLineList, false, false, true)
+                FCOCF.horizontalScrollListFilterButtons[comingFrom]:SetHidden(false)
             end
 
             --Research dialog
@@ -1670,17 +1700,6 @@ end
 --Create the hooks & pre-hooks
 local function FCOCraftFilter_CreateHooks()
 
-    --Hook into AdvancedFilters Updated FilterHorizontalScrollList function to apply the FCOCraftFilter horizontal scroll list afterwards
---[[
-    if AdvancedFilters ~= nil then
-        if AdvancedFilters.util.FilterHorizontalScrollList ~= nil then
-            SecurePostHook(AdvancedFilters.util, "FilterHorizontalScrollList", function()
-                callCurrentlyResearchedItemsFilter(false) --no toggle: use current FCOCF settings
-            end)
-        end
-    end
-]]
-
     --======== SMITHING =============================================================
     --[[
         --Prehook the smithing function SetMode() which gets executed as the smithing tabs are changed
@@ -1708,9 +1727,13 @@ local function FCOCraftFilter_CreateHooks()
         --Refine
         if     mode == SMITHING_MODE_REFINEMENT then
             filterPanelId = LF_SMITHING_REFINE
+            --[[
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
                 filterPanelId = LF_JEWELRY_REFINE
             end
+            ]]
+            --Detect if the filterType should be switched to jewelry*
+            filterPanelId = libFilters:GetFilterTypeRespectingCraftType(filterPanelId, craftingType)
             --Refine
             zo_callLater(function()
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING refine SetMode")
@@ -1718,9 +1741,13 @@ local function FCOCraftFilter_CreateHooks()
             --Deconstruction
         elseif     mode == SMITHING_MODE_DECONSTRUCTION then
             filterPanelId = LF_SMITHING_DECONSTRUCT
+            --[[
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
                 filterPanelId = LF_JEWELRY_DECONSTRUCT
             end
+            ]]
+            --Detect if the filterType should be switched to jewelry*
+            filterPanelId = libFilters:GetFilterTypeRespectingCraftType(filterPanelId, craftingType)
             --Deconstruction
             zo_callLater(function()
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING deconstruct SetMode")
@@ -1728,22 +1755,31 @@ local function FCOCraftFilter_CreateHooks()
             --Improvement
         elseif mode == SMITHING_MODE_IMPROVEMENT then
             filterPanelId = LF_SMITHING_IMPROVEMENT
+            --[[
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
                 filterPanelId = LF_JEWELRY_IMPROVEMENT
             end
+            ]]
+            --Detect if the filterType should be switched to jewelry*
+            filterPanelId = libFilters:GetFilterTypeRespectingCraftType(filterPanelId, craftingType)
             zo_callLater(function()
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING improvement SetMode")
             end, 10)
             --Research
         elseif mode == SMITHING_MODE_RESEARCH then
             filterPanelId = LF_SMITHING_RESEARCH
+            --[[
             if craftingType == CRAFTING_TYPE_JEWELRYCRAFTING then
                 filterPanelId = LF_JEWELRY_RESEARCH
             end
+            ]]
+            --Detect if the filterType should be switched to jewelry*
+            filterPanelId = libFilters:GetFilterTypeRespectingCraftType(filterPanelId, craftingType)
             zo_callLater(function()
+                --Adds/Updates the button "show all/banked only/inventory only items" & add/update the horizontal scrollbar "show currently researched only"!
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING research SetMode")
                 reanchorResearchControls()
-
+                --Update the horizontal scrollbar filters
                 callCurrentlyResearchedItemsFilter()
             end, 10)
             --[[
@@ -2068,10 +2104,24 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
                 [LF_ENCHANTING_EXTRACTION] 	= FCOCF_SHOW_ALL,
             },
         },
+        horizontalScrollBarFilterApplied = {
+            [CRAFTING_TYPE_BLACKSMITHING] = {
+                [LF_SMITHING_RESEARCH]      = false,
+            },
+            [CRAFTING_TYPE_CLOTHIER] = {
+                [LF_SMITHING_RESEARCH]      = false,
+            },
+            [CRAFTING_TYPE_WOODWORKING] = {
+                [LF_SMITHING_RESEARCH]      = false,
+            },
+            [CRAFTING_TYPE_JEWELRYCRAFTING] = {
+                [LF_JEWELRY_RESEARCH]       = false,
+            },
+        },
         enableMediumFilters             = true,
         showButtonResearchOnlyCurrentlyResearched = false,
-        isCurrentlyResearchedItemFilterEnabled = false,
     }
+    FCOCF.settingsVars.defaults = defaults
 
 --=============================================================================================================
 --	LOAD USER SETTINGS
