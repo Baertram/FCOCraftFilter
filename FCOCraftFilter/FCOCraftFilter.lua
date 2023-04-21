@@ -1656,10 +1656,11 @@ end
 
 local function FCOCraftFilter_CheckIfDefaultCraftingTabShouldBeSelected(craftSkill)
 --d("FCOCraftFilter_CheckIfDefaultCraftingTabShouldBeSelected-craftSkill:" .. tos(craftSkill))
+    FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
+
     local settings = FCOCF.settingsVars.settings
     if not settings.defaultCraftTabDescriptorEnabled then return end
     craftSkill = craftSkill or GetCraftingInteractionType()
-    FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
 
     if craftSkill == CRAFTING_TYPE_INVALID then
         if libFilters:IsRetraitStationShown() == true or not zoVars.TRANSMUTATIONSTATION_CONTROL:IsHidden() then
