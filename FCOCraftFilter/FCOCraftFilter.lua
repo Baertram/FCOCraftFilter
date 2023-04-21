@@ -40,7 +40,7 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.51 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.6.0' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptions 		= '0.6.2' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -114,6 +114,18 @@ local ench      = zoVars.CRAFTSTATION_ENCHANTING_VAR
 zoVars.CRAFTSTATION_ENCHANTING_INVENTORY                        = ZO_EnchantingTopLevelInventory
 zoVars.CRAFTSTATION_ENCHANTING_TABS                             = ZO_EnchantingTopLevelInventoryTabs
 
+--Alchemy
+--zoVars.CRAFTSTATION_ALCHEMY	                                    = ZO_Alchemy
+--local zo_alch      = zoVars.CRAFTSTATION_ALCHEMY
+zoVars.CRAFTSTATION_ALCHEMY_VAR                              = ALCHEMY
+local alch      = zoVars.CRAFTSTATION_ALCHEMY_VAR
+
+--Provisioning
+--zoVars.CRAFTSTATION_PROVISIONING                           = ZO_Provisioner
+--local zo_prov     = zoVars.CRAFTSTATION_PROVISIONING
+zoVars.CRAFTSTATION_PROVISIONING_VAR                              = PROVISIONER
+local prov      = zoVars.CRAFTSTATION_PROVISIONING_VAR
+
 --Transmutation
 --Transmutation / Retrait
 --Markarth or newer
@@ -123,6 +135,9 @@ zoVars.TRANSMUTATIONSTATION_RETRAIT_PANEL                         = retrait
 zoVars.TRANSMUTATIONSTATION_CONTROL                               = retrait.control
 zoVars.TRANSMUTATIONSTATION_INVENTORY                             = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventory
 zoVars.TRANSMUTATIONSTATION_TABS                                  = ZO_RetraitStation_KeyboardTopLevelRetraitPanelInventoryTabs
+zoVars.RETRAITSTATION = ZO_RETRAIT_STATION_KEYBOARD
+local retraitStation     = zoVars.RETRAITSTATION
+local retraitStationTabs = retraitStation.tabs
 
 --Include banked items checkbox
 zoVars.INVENTORY_NAME                                             = "Inventory"
@@ -187,6 +202,66 @@ local craftingTableSVs = {
 }
 FCOCF.craftingTableSVs = craftingTableSVs
 
+local blacksmithRecipeDescriptor = _G["SI_RECIPECRAFTINGSYSTEM" .. GetTradeskillRecipeCraftingSystem(CRAFTING_TYPE_BLACKSMITHING)]
+local clothierRecipeDescriptor = _G["SI_RECIPECRAFTINGSYSTEM" .. GetTradeskillRecipeCraftingSystem(CRAFTING_TYPE_CLOTHIER)]
+local enchantingRecipeDescriptor = _G["SI_RECIPECRAFTINGSYSTEM" .. GetTradeskillRecipeCraftingSystem(CRAFTING_TYPE_ENCHANTING)]
+local alchemyRecipeDescriptor = _G["SI_RECIPECRAFTINGSYSTEM" .. GetTradeskillRecipeCraftingSystem(CRAFTING_TYPE_ALCHEMY)]
+local proivisioningRecipeDescriptor = _G["SI_RECIPECRAFTINGSYSTEM" .. GetTradeskillRecipeCraftingSystem(CRAFTING_TYPE_PROVISIONING)]
+local woodworkingRecipeDescriptor = _G["SI_RECIPECRAFTINGSYSTEM" .. GetTradeskillRecipeCraftingSystem(CRAFTING_TYPE_WOODWORKING)]
+local jewelryRecipeDescriptor = _G["SI_RECIPECRAFTINGSYSTEM" .. GetTradeskillRecipeCraftingSystem(CRAFTING_TYPE_JEWELRYCRAFTING)]
+
+--local smithingCraftingTabEntries = {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(SI_ITEMTYPE29)}
+local smithingCraftingTabEntriesValues = {SMITHING_MODE_REFINEMENT, SMITHING_MODE_CREATION, SMITHING_MODE_DECONSTRUCTION, SMITHING_MODE_IMPROVEMENT, SMITHING_MODE_RESEARCH, SMITHING_MODE_RECIPES}
+local possibleCraftingTypeTabDropdownEntries       = {
+    [CRAFTING_TYPE_ALCHEMY] =           {GetString(SI_ALCHEMY_CREATION), GetString(alchemyRecipeDescriptor)},
+    [CRAFTING_TYPE_BLACKSMITHING] =     {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(blacksmithRecipeDescriptor)},
+    [CRAFTING_TYPE_CLOTHIER] =          {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(clothierRecipeDescriptor)},
+    [CRAFTING_TYPE_ENCHANTING] =        {GetString(SI_ENCHANTING_CREATION), GetString(SI_ENCHANTING_EXTRACTION), GetString(enchantingRecipeDescriptor)},
+    [CRAFTING_TYPE_JEWELRYCRAFTING] =   {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(jewelryRecipeDescriptor)},
+    [CRAFTING_TYPE_PROVISIONING] =      {GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_FILLET), GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_SPICES), GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_FLAVORING), GetString(proivisioningRecipeDescriptor)}, --GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_FURNISHING)},
+    [CRAFTING_TYPE_WOODWORKING] =       {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(woodworkingRecipeDescriptor)},
+    ["retrait"]                 =       {GetString(SI_RETRAIT_STATION_RETRAIT_MODE), GetString(SI_RETRAIT_STATION_RECONSTRUCT_MODE)},
+    ["universalDeconstruction"] =       {}
+}
+local possibleCraftingTypeTabDropdownEntriesValues = {
+    [CRAFTING_TYPE_ALCHEMY] =           {ZO_ALCHEMY_MODE_CREATION, ZO_ALCHEMY_MODE_RECIPES},
+    [CRAFTING_TYPE_BLACKSMITHING] =     smithingCraftingTabEntriesValues,
+    [CRAFTING_TYPE_CLOTHIER] =          smithingCraftingTabEntriesValues,
+    [CRAFTING_TYPE_ENCHANTING] =        {ENCHANTING_MODE_CREATION, ENCHANTING_MODE_EXTRACTION, ENCHANTING_MODE_RECIPES},
+    [CRAFTING_TYPE_JEWELRYCRAFTING] =   smithingCraftingTabEntriesValues,
+    [CRAFTING_TYPE_PROVISIONING] =      {PROVISIONER_SPECIAL_INGREDIENT_TYPE_FILLET, PROVISIONER_SPECIAL_INGREDIENT_TYPE_SPICES, PROVISIONER_SPECIAL_INGREDIENT_TYPE_FLAVORING, PROVISIONER_SPECIAL_INGREDIENT_TYPE_FURNISHING},
+    [CRAFTING_TYPE_WOODWORKING] =       smithingCraftingTabEntriesValues,
+    ["retrait"]                 =       {"retraitTab", "reconstructTab"},--{ZO_RETRAIT_MODE_RETRAIT, ZO_RETRAIT_MODE_RECONSTRUCT},
+    ["universalDeconstruction"] =       {}
+}
+
+local tabButtonBarsByCraftingType = {
+    [CRAFTING_TYPE_ALCHEMY] =           alch.modeBar,
+    [CRAFTING_TYPE_BLACKSMITHING] =     smith.modeBar,
+    [CRAFTING_TYPE_CLOTHIER] =          smith.modeBar,
+    [CRAFTING_TYPE_ENCHANTING] =        ench.modeBar,
+    [CRAFTING_TYPE_JEWELRYCRAFTING] =   smith.modeBar,
+    [CRAFTING_TYPE_PROVISIONING] =      prov.tabs,
+    [CRAFTING_TYPE_WOODWORKING] =       smith.modeBar,
+    ["retrait"] =                       retraitStationTabs,
+    ["universalDeconstruction"] =       universalDeconPanelInv.tabs
+}
+
+local universalDeconKeys = {
+    "all",
+    "armor",
+    "weapons",
+    "jewelry",
+    "enchantments",
+}
+for _, unversalDeconKey in ipairs(universalDeconKeys) do
+    local dataOfKey = ZO_GetUniversalDeconstructionFilterType(unversalDeconKey)
+    table.insert(possibleCraftingTypeTabDropdownEntries["universalDeconstruction"], dataOfKey.displayName)
+    table.insert(possibleCraftingTypeTabDropdownEntriesValues["universalDeconstruction"], unversalDeconKey) --dataOfKey.filter cannot be used as those are whole tables, used as descriptor!
+end
+
+
+
 local libFilters_GetFilterTypeReferences
 local function getCraftingPanelControlByFilterType(filterType, isUniversalDecon)
     libFilters_GetFilterTypeReferences = libFilters_GetFilterTypeReferences or libFilters.GetFilterTypeReferences
@@ -240,6 +315,7 @@ FCOCF.preventerVars.gLocalizationDone = false
 FCOCF.preventerVars.gLockpickActive	= false
 FCOCF.preventerVars.gOnLockpickChatState = false
 FCOCF.preventerVars.ZO_ListDialog1ResearchIsOpen = false
+FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
 
 --Localization
 FCOCF.localizationVars = {}
@@ -256,6 +332,73 @@ local textureCurrentlyResearched = "/esoui/art/tutorial/smithing_tabicon_researc
 
 --===================== FUNCTIONS ==============================================
 
+local function getCraftingTabButtonBar(craftingType)
+    return tabButtonBarsByCraftingType[craftingType]
+end
+
+local function getUniversalDeconDescriptor(unversalDeconKey)
+    return ZO_GetUniversalDeconstructionFilterType(unversalDeconKey).filter --the filter table is nil at the "all" tab!
+end
+
+local function setRetraitTabButtonTo(newRetraitTab)
+    --d("[FCOCF]setRetraitTabButtonTo-newRetraitTab:" .. tos(newRetraitTab))
+    local tabButtonBar
+    tabButtonBar = getCraftingTabButtonBar("retrait")
+--d(">tabButtonBar: " .. tos(tabButtonBar))
+    if tabButtonBar ~= nil and newRetraitTab ~= nil then
+--d(">>Setting retrait tab to: " ..tos(newRetraitTab))
+        tabButtonBar:SelectFragment(retraitStation[newRetraitTab].categoryName)
+        return true
+    end
+    return false
+end
+
+local function setCraftingTabButtonTo(craftingTypeOrUniversalDeconKey, isUniversalDecon, descriptorOrNewUniversalDeconKey, currentUniversalDeconTab)
+    isUniversalDecon = isUniversalDecon or false
+--d("[FCOCF]setCraftingTabButtonTo-craftSkill:" .. tos(craftingTypeOrUniversalDeconKey) .. ", isUniversalDecon: " ..tos(isUniversalDecon) .. ", newDescriptor: " .. tos(descriptorOrNewUniversalDeconKey))
+    local newTabDescriptor, tabButtonBar
+    if isUniversalDecon == true then
+        --Get the current UniversalDecon selected tab
+        local lFilterTypeDetected
+        if currentUniversalDeconTab == nil then
+            lFilterTypeDetected, currentUniversalDeconTab = libFilters.GetUniversalDeconstructionPanelActiveTabFilterType()
+        elseif currentUniversalDeconTab.key ~= nil then
+            currentUniversalDeconTab = currentUniversalDeconTab.key
+        end
+--d(">currentUniversalDeconKey: " .. tos(currentUniversalDeconTab))
+        --Change tab it, if needed
+        if descriptorOrNewUniversalDeconKey == currentUniversalDeconTab then
+--d("<[ABORT]universalDecon tab already active!")
+            return false
+        end
+
+        --Get the actual descriptor for the new tab, by the new key
+        newTabDescriptor = getUniversalDeconDescriptor(descriptorOrNewUniversalDeconKey)
+        tabButtonBar = getCraftingTabButtonBar("universalDeconstruction")
+    else
+        if craftingTypeOrUniversalDeconKey == nil then return end
+        newTabDescriptor = descriptorOrNewUniversalDeconKey
+        tabButtonBar = getCraftingTabButtonBar(craftingTypeOrUniversalDeconKey)
+    end
+--d(">tabButtonBar: " .. tos(tabButtonBar) .. ", newTabDescriptor: " .. tos(newTabDescriptor))
+    if tabButtonBar ~= nil and ((not isUniversalDecon and newTabDescriptor ~= nil) or isUniversalDecon) then
+        --Get the currently selected descriptor
+        if ZO_MenuBar_GetSelectedDescriptor(tabButtonBar) == newTabDescriptor then
+--d("<[ABORT]descriptor already active!")
+            return false
+        end
+        --And change it, if it differs
+--d(">>Setting descriptor to: " ..tos(newTabDescriptor))
+        ZO_MenuBar_SelectDescriptor(tabButtonBar, newTabDescriptor, true, false)
+        return true
+    end
+    return false
+end
+
+
+------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
 local function getCurrentButtonStateAndTexture(isUniversalDecon, isResearchShowOnlyCurrentlyResearched)
     isUniversalDecon = isUniversalDecon or false
     isResearchShowOnlyCurrentlyResearched = isResearchShowOnlyCurrentlyResearched or false
@@ -567,6 +710,7 @@ end
 local function BuildAddonMenu()
     local addonVars = FCOCF.addonVars
     local settings = FCOCF.settingsVars.settings
+    local defaults = FCOCF.settingsVars.defaults
     local localizationVars = FCOCF.localizationVars.FCOCF_loc
 
     local panelData = {
@@ -601,6 +745,8 @@ local function BuildAddonMenu()
         [1] = localizationVars["options_savedVariables_dropdown_selection1"],
         [2] = localizationVars["options_savedVariables_dropdown_selection2"],
     }
+
+
 
     --The LAM settings panel
     FCOCF.LAMSettingsPanel = LAM:RegisterAddonPanel(addonVars.gAddonName .. "_LAMPanel", panelData)
@@ -649,7 +795,7 @@ local function BuildAddonMenu()
 				settings.alwaysUseClientLanguage = value
                       --ReloadUI()
 		            end,
-            default = settings.alwaysUseClientLanguage,
+            default = defaults.alwaysUseClientLanguage,
             warning = localizationVars["options_language_description1"],
             requiresReload = true,
 		},
@@ -681,7 +827,7 @@ local function BuildAddonMenu()
             getFunc = function() return settings.enableMediumFilters end,
             setFunc = function(value) settings.enableMediumFilters = value
             end,
-            default = settings.enableMediumFilters,
+            default = defaults.enableMediumFilters,
             width="full",
         },
         {
@@ -695,7 +841,144 @@ local function BuildAddonMenu()
             getFunc = function() return settings.showButtonResearchOnlyCurrentlyResearched end,
             setFunc = function(value) settings.showButtonResearchOnlyCurrentlyResearched = value
             end,
-            default = settings.showButtonResearchOnlyCurrentlyResearched,
+            default = defaults.showButtonResearchOnlyCurrentlyResearched,
+            width="full",
+        },
+        {
+            type = 'header',
+            name = localizationVars["options_header_defaultCraftTab"],
+        },
+        {
+            type = "checkbox",
+            name = localizationVars["options_defaultCraftTab_enable"],
+            tooltip = localizationVars["options_defaultCraftTab_enable_TT"],
+            getFunc = function() return settings.defaultCraftTabDescriptorEnabled end,
+            setFunc = function(value) settings.defaultCraftTabDescriptorEnabled = value
+            end,
+            default = defaults.defaultCraftTabDescriptorEnabled,
+            width="full",
+        },
+        {
+            type = "dropdown",
+            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_ALCHEMY]),
+            --tooltip = GetString(),
+            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_ALCHEMY],
+            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_ALCHEMY],
+            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_ALCHEMY] end,
+            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_ALCHEMY] = value
+            end,
+            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_ALCHEMY],
+            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
+            width="full",
+        },
+        {
+            type = "dropdown",
+            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_PROVISIONING]),
+            --tooltip = GetString(),
+            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_PROVISIONING],
+            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_PROVISIONING],
+            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_PROVISIONING] end,
+            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_PROVISIONING] = value
+            end,
+            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_PROVISIONING],
+            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
+            width="full",
+        },
+        {
+            type = "dropdown",
+            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_ENCHANTING]),
+            --tooltip = GetString(),
+            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_ENCHANTING],
+            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_ENCHANTING],
+            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_ENCHANTING] end,
+            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_ENCHANTING] = value
+            end,
+            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_ENCHANTING],
+            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
+            width="full",
+        },
+        {
+            type = "dropdown",
+            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_BLACKSMITHING]),
+            --tooltip = GetString(),
+            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_BLACKSMITHING],
+            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_BLACKSMITHING],
+            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_BLACKSMITHING] end,
+            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_BLACKSMITHING] = value
+            end,
+            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_BLACKSMITHING],
+            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
+            width="full",
+        },
+        {
+            type = "dropdown",
+            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_CLOTHIER]),
+            --tooltip = GetString(),
+            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_CLOTHIER],
+            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_CLOTHIER],
+            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_CLOTHIER] end,
+            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_CLOTHIER] = value
+            end,
+            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_CLOTHIER],
+            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
+            width="full",
+        },
+        {
+            type = "dropdown",
+            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_WOODWORKING]),
+            --tooltip = GetString(),
+            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_WOODWORKING],
+            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_WOODWORKING],
+            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_WOODWORKING] end,
+            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_WOODWORKING] = value
+            end,
+            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_WOODWORKING],
+            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
+            width="full",
+        },
+        {
+            type = "dropdown",
+            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_JEWELRYCRAFTING]),
+            --tooltip = GetString(),
+            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_JEWELRYCRAFTING],
+            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_JEWELRYCRAFTING],
+            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_JEWELRYCRAFTING] end,
+            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_JEWELRYCRAFTING] = value
+            end,
+            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_JEWELRYCRAFTING],
+            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
+            width="full",
+        },
+        {
+            type = "dropdown",
+            name = GetString(SI_RETRAIT_STATION_HEADER),
+            --tooltip = GetString(),
+            choices = possibleCraftingTypeTabDropdownEntries["retrait"],
+            choicesValues = possibleCraftingTypeTabDropdownEntriesValues["retrait"],
+            getFunc = function() return settings.defaultCraftTabDescriptor["retrait"] end,
+            setFunc = function(value) settings.defaultCraftTabDescriptor["retrait"] = value
+                --[[
+                retraitStationTabs = retraitStationTabs or retraitStation.tabs
+                if retraitStationTabs ~= nil then
+                    retraitStationTabs:SetStartingFragment(retraitStation[value].categoryName)
+                end
+                ]]
+            end,
+            default = defaults.defaultCraftTabDescriptor["retrait"],
+            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
+            width="full",
+        },
+        {
+            type = "dropdown",
+            name = "Universal Deconstruction",
+            --tooltip = GetString(),
+            choices = possibleCraftingTypeTabDropdownEntries["universalDeconstruction"],
+            choicesValues = possibleCraftingTypeTabDropdownEntriesValues["universalDeconstruction"],
+            getFunc = function() return settings.defaultCraftTabDescriptor["universalDeconstruction"] end,
+            setFunc = function(value) settings.defaultCraftTabDescriptor["universalDeconstruction"] = value
+            end,
+            default = defaults.defaultCraftTabDescriptor["universalDeconstruction"],
+            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
             width="full",
         },
     }
@@ -960,7 +1243,7 @@ local function FCOCraftFilter_CheckActivePanel(comingFrom, isUniversalDeconShown
     local craftingType = GetCraftingInteractionType()
 
     --UniversalDeconstruction
-    if (isUniversalDeconShown == true or libFilters_IsUniversalDeconstructionPanelShown()) and libFilters_IsUniversalDeconstructionSupportedFilterType(comingFrom) then
+    if (isUniversalDeconShown == true or libFilters_IsUniversalDeconstructionPanelShown(libFilters)) and libFilters_IsUniversalDeconstructionSupportedFilterType(comingFrom) then
 --d(">universal decon")
         craftingType = FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION
         locVars.gLastCraftingType = craftingType
@@ -1076,9 +1359,9 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
 
         if isResearchShowOnlyCurrentlyResearched == true then
             if filterApplied == true then
-                texture:SetColor(0, 1, 0, 0.4)
+                texture:SetColor(0, 1, 0, 1)
             else
-                texture:SetColor(1, 1, 1, 1)
+                texture:SetColor(1, 1, 1, 0.5)
             end
         else
             texture:SetColor(1, 1, 1, 1)
@@ -1371,35 +1654,74 @@ local function addFilterButtonUniversalDecon(filterType)
     return addedButtonData
 end
 
+local function FCOCraftFilter_CheckIfDefaultCraftingTabShouldBeSelected(craftSkill)
+--d("FCOCraftFilter_CheckIfDefaultCraftingTabShouldBeSelected-craftSkill:" .. tos(craftSkill))
+    local settings = FCOCF.settingsVars.settings
+    if not settings.defaultCraftTabDescriptorEnabled then return end
+    craftSkill = craftSkill or GetCraftingInteractionType()
+    FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
+
+    if craftSkill == CRAFTING_TYPE_INVALID then
+        if libFilters:IsRetraitStationShown() == true or not zoVars.TRANSMUTATIONSTATION_CONTROL:IsHidden() then
+            FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
+--d(">retrait")
+            setRetraitTabButtonTo(settings.defaultCraftTabDescriptor["retrait"])
+        else
+            FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = true
+            zo_callLater(function()
+                --Check if the retrait station is shown
+                if libFilters:IsRetraitStationShown() == true or not zoVars.TRANSMUTATIONSTATION_CONTROL:IsHidden() then
+--d(">retrait delayed")
+                    FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
+                    setRetraitTabButtonTo(settings.defaultCraftTabDescriptor["retrait"])
+                end
+            end, 50) -- delayed in order to let the retrait panel show properly!
+        end
+    else
+--d(">other crafting type: " ..tos(craftSkill))
+        --Others
+        setCraftingTabButtonTo(craftSkill, false, settings.defaultCraftTabDescriptor[craftSkill])
+    end
+end
+
+local function updateRetraitButtons(craftSkill)
+    --Set the actual panel to transmutation/retrait
+    FCOCF.locVars.gLastPanel = LF_RETRAIT
+    FCOCF.locVars.gLastCraftingType = craftSkill
+    --Add the button to the retrait station now
+    local tooltipVar = ""
+    local xOffset = (PerfectPixel == nil and -445) or -425
+    AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM, 32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
+    --Update the filters for the Retrait station now (again)
+    FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, false)
+end
 
 --Check if the retrait station is shown and add the button now
 local function FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton(craftSkill)
-    if craftSkill == nil then return end
+--d("FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton-craftSkill:" .. tos(craftSkill))
     if craftSkill == CRAFTING_TYPE_INVALID then
-        zo_callLater(function()
-            --Check if the retrait station is shown
-            if not zoVars.TRANSMUTATIONSTATION_CONTROL:IsHidden() then
-                --Set the actual panel to transmutation/retrait
-                FCOCF.locVars.gLastPanel = LF_RETRAIT
-                FCOCF.locVars.gLastCraftingType = craftSkill
-                --Add the button to the retrait station now
-                local tooltipVar = ""
-                local xOffset = (PerfectPixel == nil and -445) or -425
-                AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM, 32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
-                --Update the filters for the Retrait station now (again)
-                FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, false)
-            end
-        end, 50) -- delayed in order to let the retrait panel show properly!
+
+--d(">found retrait: " ..tos(libFilters:IsRetraitStationShown()))
+        if libFilters:IsRetraitStationShown() == true then
+            updateRetraitButtons(craftSkill)
+        else
+            zo_callLater(function()
+                --Check if the retrait station is shown
+                if libFilters:IsRetraitStationShown() or not zoVars.TRANSMUTATIONSTATION_CONTROL:IsHidden() then
+                    updateRetraitButtons(craftSkill)
+                end
+            end, 50) -- delayed in order to let the retrait panel show properly!
+        end
     end
 end
 
 --Event upon opening a crafting station
 local function FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation)
---d("FCOCraftFilter_OnOpenCraftingStation")
     local locVars = FCOCF.locVars
     local lastPanel = locVars.gLastPanel
     --Set crafting station type to invalid if not given (e.g. when coming from the retrait station)
     craftSkill = craftSkill or CRAFTING_TYPE_INVALID
+--d("FCOCraftFilter_OnOpenCraftingStation-craftSkill:" .. tos(craftSkill))
 
     --Hide the ZOs checkbox for "Include banked" and reset it to it's default value
     hideIncludeBankedItemsCheckbox()
@@ -1411,7 +1733,7 @@ local function FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation)
     if locVars.gLastCraftingType == CRAFTING_TYPE_INVALID then
         --and the last panel was the retrait station or an UniversalDeconstruction filterType
         if lastPanel == LF_RETRAIT or libFilters_IsUniversalDeconstructionSupportedFilterType(lastPanel) then
---d(">resetting filter for panel: " .. tos(lastPanel))
+            --d(">resetting filter for panel: " .. tos(lastPanel))
             FCOCraftFilter_UnregisterFilter(locVars.gLastCraftingType .. "_" .. lastPanel, lastPanel)
         end
     end
@@ -1426,11 +1748,15 @@ local function FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation)
     --Is the craftSkill not valid then it could be the retrait station.
     --Check if the retrait station is shown and add the button now
     FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton(craftSkill)
+
+    --Check if "default" tab selection needs to change the tab
+    FCOCraftFilter_CheckIfDefaultCraftingTabShouldBeSelected(craftSkill)
 end
 
 --Event upon closing a crafting station
 local function FCOCraftFilter_OnCloseCrafting(...)
 --d("FCOCraftFilter_OnCloseCraftingStation, gLastCraftingType was reset to NIL")
+    FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
     local locVars = FCOCF.locVars
     if locVars.gLastPanel == nil then return false end
     FCOCraftFilter_UnregisterFilter(locVars.gLastCraftingType .. "_" .. locVars.gLastPanel, locVars.gLastPanel)
@@ -1674,7 +2000,6 @@ end
 --Check if UniversalDeconstruction is shown
 local function FCOCraftFilter_CheckIfUniversalDeconIsShownAndAddButton(craftSkill, stateStr, universalDeconSelectedTabNow)
 --d("[FCOCraftFilter_CheckIfUniversalDeconIsShownAndAddButton]craftSkill: " ..tos(craftSkill) .. ", stateStr: " ..tos(stateStr) .. ", tab: " ..tos(universalDeconSelectedTabNow))
-    if craftSkill == nil then return end
     if craftSkill == FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION then
         libFilters_getUniversalDeconstructionPanelActiveTabFilterType = libFilters_getUniversalDeconstructionPanelActiveTabFilterType or libFilters.GetUniversalDeconstructionPanelActiveTabFilterType
         local currentUniversalDeconFilterType, universalDeconCurrentTab = libFilters_getUniversalDeconstructionPanelActiveTabFilterType(nil)
@@ -1960,8 +2285,17 @@ local function FCOCraftFilter_CreateHooks()
         universalDeconSelectedTabNow
     ]]
     local function libFiltersUniversalDeconShownOrHiddenCallback(isShown, callbackName, filterType, stateStr, isInGamepadMode, fragmentOrSceneOrControl, lReferencesToFilterType, universalDeconSelectedTabNow)
---d("[UNIVERSAL_DECONSTRUCTION - CALLBACK - " ..tos(callbackName) .. ", state: "..tos(stateStr) .. ", filterType: " ..tos(filterType) ..", isInGamepadMode: " ..tos(isInGamepadMode) .. ", universalDeconSelectedTabNow: " ..tos(universalDeconSelectedTabNow))
+        --d("[UNIVERSAL_DECONSTRUCTION - CALLBACK - " ..tos(callbackName) .. ", state: "..tos(stateStr) .. ", filterType: " ..tos(filterType) ..", isInGamepadMode: " ..tos(isInGamepadMode) .. ", universalDeconSelectedTabNow: " ..tos(universalDeconSelectedTabNow))
         FCOCraftFilter_CheckIfUniversalDeconIsShownAndAddButton(FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION, stateStr, universalDeconSelectedTabNow)
+
+        --Universal Decon panel shown and crafting table was opened recently?
+        if isShown == true and FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened then
+--d(">UniversalDecon panel, and crafting table opened recently!")
+            FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
+            setCraftingTabButtonTo("universalDeconstruction", true, FCOCF.settingsVars.settings.defaultCraftTabDescriptor["universalDeconstruction"], universalDeconSelectedTabNow)
+        elseif not isShown then
+            FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
+        end
     end
     local callbackNameUniversalDeconDeconAllShown = libFilters:RegisterCallbackName(addonName, LF_SMITHING_DECONSTRUCT, true, nil, "all", "TEST-callback-name-raise-before")
     local callbackNameUniversalDeconDeconAllHidden = libFilters:RegisterCallbackName(addonName, LF_SMITHING_DECONSTRUCT, false, nil, "all")
@@ -2120,6 +2454,18 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
         },
         enableMediumFilters             = true,
         showButtonResearchOnlyCurrentlyResearched = false,
+        defaultCraftTabDescriptorEnabled = false,
+        defaultCraftTabDescriptor = {
+            [CRAFTING_TYPE_ALCHEMY] =           ZO_ALCHEMY_MODE_CREATION,
+            [CRAFTING_TYPE_BLACKSMITHING] =     SMITHING_MODE_CREATION,
+            [CRAFTING_TYPE_CLOTHIER] =          SMITHING_MODE_CREATION,
+            [CRAFTING_TYPE_ENCHANTING] =        ENCHANTING_MODE_CREATION,
+            [CRAFTING_TYPE_JEWELRYCRAFTING] =   SMITHING_MODE_CREATION,
+            [CRAFTING_TYPE_PROVISIONING] =      PROVISIONER_SPECIAL_INGREDIENT_TYPE_SPICES,
+            [CRAFTING_TYPE_WOODWORKING] =       SMITHING_MODE_CREATION,
+            ["universalDeconstruction"] =       "all",
+            ["retrait"] =                       "retraitTab",
+        },
     }
     FCOCF.settingsVars.defaults = defaults
 
