@@ -2287,19 +2287,22 @@ local function FCOCraftFilter_CreateHooks()
     SecurePostHook(origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData, "setupFunction", function(node, control, headerData, open, userRequested, enabled)
 --d("origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData:setupFunction")
         if isAnyMasterCrafterStationSetUnlocked() == false then return end
-        if enabled == true and headerData ~= nil and headerData.dataSource ~= nil and headerData.dataSource.categoryId == FAVORITES_CATEGORY_ID then
-            control:SetHandler("OnMouseUp", function(ctrl, mouseButton, upInside)
-                if upInside and mouseButton == MOUSE_BUTTON_INDEX_RIGHT then
-                    ClearMenu()
-                    local masterCrafterSetsFavorites = FCOCF.settingsVars.settings.masterCrafterSetsFavorites
-                    if ZO_IsTableEmpty(masterCrafterSetsFavorites) then return end
-                    AddMenuItem(favIconStr .. " " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1), function()
-                        changeMasterCrafterSetFavorites(nil, nil, false, true)
-                    end)
-                    ShowMenu(ctrl)
+        control:SetHandler("OnMouseUp", function(ctrl, mouseButton, upInside)
+            if upInside and mouseButton == MOUSE_BUTTON_INDEX_RIGHT then
+                if not enabled or headerData == nil or headerData.dataSource == nil or headerData.dataSource.categoryId ~= FAVORITES_CATEGORY_ID then
+d("<not enabled or wrong category id or dataSource missing!")
+                    return
                 end
-            end, "FCOChangeStuff_Smithing_Create_SetHeader_ContextMenu")
-        end
+                
+                ClearMenu()
+                local masterCrafterSetsFavorites = FCOCF.settingsVars.settings.masterCrafterSetsFavorites
+                if ZO_IsTableEmpty(masterCrafterSetsFavorites) then return end
+                AddMenuItem(favIconStr .. " " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1), function()
+                    changeMasterCrafterSetFavorites(nil, nil, false, true)
+                end)
+                ShowMenu(ctrl)
+            end
+        end, "FCOChangeStuff_Smithing_Create_SetHeader_ContextMenu")
     end)
 
     --SET IITEM
