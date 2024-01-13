@@ -18,6 +18,14 @@
    ã : \195\163    õ : \195\181  				   \195\177 : \195\177
 ]]
 local FCOCF = FCOCF
+
+local FAVORITES_TANK_CATEGORY_ID = FCOCF.FAVORITES_TANK_CATEGORY_ID
+local FAVORITES_STAM_HEAL_CATEGORY_ID = FCOCF.FAVORITES_STAM_HEAL_CATEGORY_ID
+local FAVORITES_MAG_HEAL_CATEGORY_ID = FCOCF.FAVORITES_MAG_HEAL_CATEGORY_ID
+local FAVORITES_STAM_DD_CATEGORY_ID = FCOCF.FAVORITES_STAM_DD_CATEGORY_ID
+local FAVORITES_MAG_DD_CATEGORY_ID = FCOCF.FAVORITES_MAG_DD_CATEGORY_ID
+local FAVORITES_HYBRID_DD_CATEGORY_ID = FCOCF.FAVORITES_HYBRID_DD_CATEGORY_ID
+
 FCOCF.localizationVars.localizationAll = {
 	--English
     [1] = {
@@ -53,6 +61,17 @@ FCOCF.localizationVars.localizationAll = {
         ["options_header_defaultCraftTab"] = "Default crafting tab",
         ["options_defaultCraftTab_enable"] = "Enable default crafing tab",
         ["options_defaultCraftTab_enable_TT"] = "Enable the default crafting tab. Choose the default tab to select, as you interact with the crafting table.",
+
+        ["options_multisets_create_enable_favorites"] = "Enable Grand Master Crafting Stations favorites",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_HYBRID_DD_CATEGORY_ID)] = "Hybrid DD",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_MAG_DD_CATEGORY_ID)] = "Mag DD",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_MAG_HEAL_CATEGORY_ID)] = "Mag Heal",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_STAM_DD_CATEGORY_ID)] = "Stam DD",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_STAM_HEAL_CATEGORY_ID)] = "Stam Heal",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_TANK_CATEGORY_ID)] = "Tank",
+        ["options_multisets_create_fav_tooltip"] = "The favorite name shown at the Grand Master Crafting Stations",
+        ["options_multisets_create_enable_favorite"] = "Enable favorite category",
+        ["options_multisets_create_enable_favorite_tooltip"] = "Enable this favorite category at the Grand Master Crafting Stations",
 
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
@@ -104,6 +123,17 @@ FCOCF.localizationVars.localizationAll = {
         ["options_header_defaultCraftTab"] = "Standard Handwerks-Reiter",
         ["options_defaultCraftTab_enable"] = "Aktiviere Standard Handwerks-Reiter",
         ["options_defaultCraftTab_enable_TT"] = "Aktiviere den Standard Handwerks-Reiter, welcher ausgewählt wird, wenn du eine Handwerksstation aufsuchst.",
+
+        ["options_multisets_create_enable_favorites"] = "Aktiviere Großmeister Handwerk Favoriten",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_HYBRID_DD_CATEGORY_ID)] = "Hybrid DD",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_MAG_DD_CATEGORY_ID)] = "Magicka DD",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_MAG_HEAL_CATEGORY_ID)] = "Magicka Heiler",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_STAM_DD_CATEGORY_ID)] = "Ausdauer DD",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_STAM_HEAL_CATEGORY_ID)] = "Ausdauer Heiler",
+        ["options_multisets_create_fav_" .. tostring(FAVORITES_TANK_CATEGORY_ID)] = "Tank",
+        ["options_multisets_create_fav_tooltip"] = "Der Favoriten Kategorie Name, welcher an er Großmeister Handwerksstation angezeigt wird",
+        ["options_multisets_create_enable_favorite"] = "Aktiviere Favoriten Kategorie",
+        ["options_multisets_create_enable_favorite_tooltip"] = "Aktiviert diese Favoriten Kategorie an der Großmeister Handwerksstation",
 
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",

@@ -351,13 +351,19 @@ local favIconStr = zo_iconTextFormatNoSpace(favoriteIcon, 24, 24, "")
 
 
 --MasterCrafter tables - New data favorite category ID
-local FAVORITES_CATEGORY_ID = 99000
 local FAVORITES_TANK_CATEGORY_ID = 99001
 local FAVORITES_STAM_HEAL_CATEGORY_ID = 99002
 local FAVORITES_MAG_HEAL_CATEGORY_ID = 99003
 local FAVORITES_STAM_DD_CATEGORY_ID = 99004
 local FAVORITES_MAG_DD_CATEGORY_ID = 99005
 local FAVORITES_HYBRID_DD_CATEGORY_ID = 99006
+FCOCF.FAVORITES_TANK_CATEGORY_ID = FAVORITES_TANK_CATEGORY_ID
+FCOCF.FAVORITES_STAM_HEAL_CATEGORY_ID = FAVORITES_STAM_HEAL_CATEGORY_ID
+FCOCF.FAVORITES_MAG_HEAL_CATEGORY_ID = FAVORITES_MAG_HEAL_CATEGORY_ID
+FCOCF.FAVORITES_STAM_DD_CATEGORY_ID = FAVORITES_STAM_DD_CATEGORY_ID
+FCOCF.FAVORITES_MAG_DD_CATEGORY_ID = FAVORITES_MAG_DD_CATEGORY_ID
+FCOCF.FAVORITES_HYBRID_DD_CATEGORY_ID = FAVORITES_HYBRID_DD_CATEGORY_ID
+
 local customMasterCrafterSetStationFavoriteIds = {
     [FAVORITES_TANK_CATEGORY_ID] = true,
     [FAVORITES_STAM_HEAL_CATEGORY_ID] = true,
@@ -581,7 +587,7 @@ local function buildFavoriteSetsDataAndAddToFavoritesCategory()
             if setData ~= nil then
                 --Get the original categoryId of the set
                 --local categoryId = savedFavoritesSetData.categoryId or setData:GetCategoryId()
-                --Do not use self:GetOrCreateConsolidatedSmithingSetCategoryData(categoryId) here, else the set would be atomatically sorted below the wrong category (original one)
+                --Do not use self:GetOrCreateConsolidatedSmithingSetCategoryData(categoryId) here, else the set would be automatically sorted below the wrong category (original one)
                 FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS[customFavoriteId]:AddSetData(setData)
             end
         end
@@ -2355,8 +2361,13 @@ local function FCOCraftFilter_CreateHooks()
 
             --Add the special set favorites category first
             buildFavoriteSetsDataAndAddToFavoritesCategory()
-            for customFavoriteId, _ in pairs(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS) do
-                self:AddSetCategory(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS[customFavoriteId])
+            local sortedCustomCategoryData = {}
+            for customFavoriteId, customFavoriteCategoryData in pairs(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS) do
+                table.insert(sortedCustomCategoryData, customFavoriteCategoryData)
+            end
+            table.sort(sortedCustomCategoryData, ZO_ConsolidatedSmithingSetCategoryData.CompareTo)
+            for _, customFavoriteCategoryData in ipairs(sortedCustomCategoryData) do
+                self:AddSetCategory(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS[customFavoriteCategoryData:GetId()])
             end
 
             --After that add special default category
