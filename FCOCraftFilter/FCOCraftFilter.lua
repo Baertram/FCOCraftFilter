@@ -368,11 +368,11 @@ local customMasterCrafterSetStationFavoriteIds = {
 }
 local customMasterCrafterSetStationFavoriteIdToName = {
     [FAVORITES_TANK_CATEGORY_ID] = "Tank",
-    [FAVORITES_STAM_HEAL_CATEGORY_ID] = "StamHeal",
-    [FAVORITES_MAG_HEAL_CATEGORY_ID] = "MagHeal",
-    [FAVORITES_STAM_DD_CATEGORY_ID] = "StamDD",
-    [FAVORITES_MAG_DD_CATEGORY_ID] = "MagDD",
-    [FAVORITES_HYBRID_DD_CATEGORY_ID] = "HybridDD",
+    [FAVORITES_STAM_HEAL_CATEGORY_ID] = "Stam Heal",
+    [FAVORITES_MAG_HEAL_CATEGORY_ID] = "Mag Heal",
+    [FAVORITES_STAM_DD_CATEGORY_ID] = "Stam DD",
+    [FAVORITES_MAG_DD_CATEGORY_ID] = "Mag DD",
+    [FAVORITES_HYBRID_DD_CATEGORY_ID] = "Hybrid DD",
 }
 local defaultFavIconCategoryTexturs = { up = favoriteIcon, down = favoriteIcon, over = favoriteIcon }
 local customMasterCrafterSetStationFavoriteIdToTexture = {
