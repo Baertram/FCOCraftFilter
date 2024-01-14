@@ -372,7 +372,7 @@ local customMasterCrafterSetStationFavoriteIds = {
     [FAVORITES_MAG_DD_CATEGORY_ID] = true,
     [FAVORITES_HYBRID_DD_CATEGORY_ID] = true,
 }
-local customMasterCrafterSetStationFavoriteIdToName = {
+local customMasterCrafterSetStationFavoriteIdToNameDefaults = {
     [FAVORITES_TANK_CATEGORY_ID] = "Tank",
     [FAVORITES_STAM_HEAL_CATEGORY_ID] = "Stam Heal",
     [FAVORITES_MAG_HEAL_CATEGORY_ID] = "Mag Heal",
@@ -380,6 +380,7 @@ local customMasterCrafterSetStationFavoriteIdToName = {
     [FAVORITES_MAG_DD_CATEGORY_ID] = "Mag DD",
     [FAVORITES_HYBRID_DD_CATEGORY_ID] = "Hybrid DD",
 }
+local customMasterCrafterSetStationFavoriteIdToName = {}
 local customMasterCrafterSetStationNameToFavoriteId = {}
 local defaultFavIconCategoryTexturs = { up = favoriteIcon, down = favoriteIcon, over = favoriteIcon }
 local customMasterCrafterSetStationFavoriteIdToTexture = {
@@ -417,6 +418,11 @@ local function doClearMasterCrafterSetFavoritesNow(customFavoriteId)
     refreshSmithingCreationTree()
 end
 
+local function getCustomSetFavoriteCategoryName(customFavoriteCategoryId)
+    if customFavoriteCategoryId == nil then return "" end
+    local masterCrafterSetsFavoritesNames = FCOCF.settingsVars.settings.masterCrafterSetsFavoritesNames
+    return masterCrafterSetsFavoritesNames[customFavoriteCategoryId] or customMasterCrafterSetStationFavoriteIdToNameDefaults[customFavoriteCategoryId] or ""
+end
 
 local masterCrafterSetFavoritesClearDialogInitialized = false
 local function initializeClearMasterCrafterSetFavoritesDialog()
@@ -432,7 +438,7 @@ local function initializeClearMasterCrafterSetFavoritesDialog()
         },
         mainText = function(dialog)
             local customFavoriteId = dialog.data.customFavoriteId
-            return { text = favIconStr .. " " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. " " .. GetString(SI_COLLECTIONS_FAVORITES_CATEGORY_HEADER) .. "?\n" .. GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. " \'" .. customMasterCrafterSetStationFavoriteIdToName[customFavoriteId] .."\'" }
+            return { text = favIconStr .. " " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. " " .. GetString(SI_COLLECTIONS_FAVORITES_CATEGORY_HEADER) .. "?\n" .. GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. " \'" .. getCustomSetFavoriteCategoryName(customFavoriteId) .."\'" }
         end,
         buttons =
         {
@@ -537,7 +543,7 @@ end
 local FCOCS_ConsolidatedSmithingSetFavoriteData = ZO_ConsolidatedSmithingSetCategoryData:Subclass()
 
 function FCOCS_ConsolidatedSmithingSetFavoriteData:GetName()
-    return customMasterCrafterSetStationFavoriteIdToName[self:GetId()]
+    return getCustomSetFavoriteCategoryName(self:GetId())
 end
 
 function FCOCS_ConsolidatedSmithingSetFavoriteData:GetKeyboardIcons()
@@ -974,11 +980,14 @@ end
 
 local function buildCustomSetFavoriteCategoryNames()
     local localizationVars = FCOCF.localizationVars.FCOCF_loc
+    customMasterCrafterSetStationFavoriteIdToNameDefaults = {}
     customMasterCrafterSetStationFavoriteIdToName = {}
     customMasterCrafterSetStationNameToFavoriteId = {}
 
     for customMasterCrafterSetStationFavoriteId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do
-        local name = localizationVars["options_multisets_create_fav_" .. tostring(customMasterCrafterSetStationFavoriteId)]
+        local defName = localizationVars["options_multisets_create_fav_" .. tostring(customMasterCrafterSetStationFavoriteId)]
+        customMasterCrafterSetStationFavoriteIdToNameDefaults[customMasterCrafterSetStationFavoriteId] = defName
+        local name = getCustomSetFavoriteCategoryName(customMasterCrafterSetStationFavoriteId)
         customMasterCrafterSetStationFavoriteIdToName[customMasterCrafterSetStationFavoriteId] = name
         customMasterCrafterSetStationNameToFavoriteId[name] = customMasterCrafterSetStationFavoriteId
     end
@@ -1281,13 +1290,15 @@ local function BuildAddonMenu()
     local sortedCustomMasterCrafterSetStationFavoriteIds = {}
     for customFavoriteCategoryId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do
         if isEnabled == true then
-            table.insert(sortedCustomMasterCrafterSetStationFavoriteIds, customMasterCrafterSetStationFavoriteIdToName[customFavoriteCategoryId])
+            table.insert(sortedCustomMasterCrafterSetStationFavoriteIds, getCustomSetFavoriteCategoryName(customFavoriteCategoryId))
         end
     end
     if not ZO_IsTableEmpty(sortedCustomMasterCrafterSetStationFavoriteIds) then
         table.sort(sortedCustomMasterCrafterSetStationFavoriteIds)
+d(">sorted names of custom category IDs")
         for _, name in ipairs(sortedCustomMasterCrafterSetStationFavoriteIds) do
-            local customFavoriteCategoryId = customMasterCrafterSetStationFavoriteIdToName[name]
+            local customFavoriteCategoryId = customMasterCrafterSetStationNameToFavoriteId[name]
+d(">name: " ..tos(name) .. "; ID: " ..tos(customFavoriteCategoryId))
             if customFavoriteCategoryId ~= nil then
                 optionsTable[#optionsTable + 1] = {
                     type = "checkbox",
@@ -1298,7 +1309,18 @@ local function BuildAddonMenu()
                     end,
                     default = defaults.settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId],
                     disabled = function() return not settings.enableMasterCrafterSetsFavorites end,
-                    width="full",
+                    width="half",
+                }
+                optionsTable[#optionsTable + 1] = {
+                    type = "editbox",
+                    name = name,
+                    tooltip = name,
+                    getFunc = function() return getCustomSetFavoriteCategoryName(customFavoriteCategoryId) end,
+                    setFunc = function(value) settings.masterCrafterSetsFavoritesNames[customFavoriteCategoryId] = value
+                    end,
+                    default = customMasterCrafterSetStationFavoriteIdToName[customFavoriteCategoryId],
+                    disabled = function() return not settings.enableMasterCrafterSetsFavorites or not settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId] end,
+                    width="half",
                 }
             end
         end
@@ -3027,6 +3049,7 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
         },
         enableMasterCrafterSetsFavorites = false,
         masterCrafterSetsFavoritesEnabled = {},
+        masterCrafterSetsFavoritesNames = {},
         masterCrafterSetsFavorites = {},
     }
     for customFavoriteId, _ in pairs(customMasterCrafterSetStationFavoriteIds) do
@@ -3056,11 +3079,11 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
 	-- Set Localization
     Localization()
 
-    --Build the LAM menu
-    BuildAddonMenu()
-
 	--Create the hooks
     FCOCraftFilter_CreateHooks()
+
+    --Build the LAM menu
+    BuildAddonMenu()
 
     -- Register slash commands
     RegisterSlashCommands()
