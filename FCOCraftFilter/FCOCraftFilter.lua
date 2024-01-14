@@ -2379,8 +2379,23 @@ local function FCOCraftFilter_CreateHooks()
 
         --Master Crafter set tables -> ZO_Tree -> AddTemplate function for the XML set entry (each node/child)
         ---> smithing_keyboard.lua, AddTemplate("ZO_ConsolidatedSmithingSetNavigationEntry", TreeEntrySetup, TreeEntryOnSelected, SetEqualityFunction)
-        --local origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData = smith.categoryTree.templateInfo["ZO_StatusIconHeader"]
-        local origSmithingCreateTreeListSetEntryData = smith.categoryTree.templateInfo["ZO_ConsolidatedSmithingSetNavigationEntry"]
+--[[
+        local origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData = ZO_ShallowTableCopy(smith.categoryTree.templateInfo["ZO_StatusIconHeader"])
+        smith.categoryTree.templateInfo["ZO_StatusIconHeader"].selectionFunction = function(...)
+            if origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData.selectionFunction ~= nil then
+                origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData.selectionFunction(...)
+            end
+        end
+        local origSmithingCreateTreeListHeaderWithStatusIconWithoutChildrenEntryData = ZO_ShallowTableCopy(smith.categoryTree.templateInfo["ZO_StatusIconChildlessHeader"])
+        smith.categoryTree.templateInfo["ZO_StatusIconChildlessHeader"].selectionFunction = function(...)
+            if origSmithingCreateTreeListHeaderWithStatusIconWithoutChildrenEntryData.selectionFunction ~= nil then
+                origSmithingCreateTreeListHeaderWithStatusIconWithoutChildrenEntryData.selectionFunction(...)
+            end
+d("Childless header was selected")
+        end
+]]
+
+        local origSmithingCreateTreeListSetEntryData = ZO_ShallowTableCopy(smith.categoryTree.templateInfo["ZO_ConsolidatedSmithingSetNavigationEntry"])
         --Add the context menu to the setup functions
         --SET IITEM
         --smith.categoryTree.templateInfo["ZO_ConsolidatedSmithingSetNavigationEntry"].setupFunction = newSmithingCreateTreeListSetEntrySetupFunc
@@ -2523,7 +2538,7 @@ local function FCOCraftFilter_CreateHooks()
 
         local origSmithingRefreshSetCategories = smith.RefreshSetCategories
         function smith.RefreshSetCategories()
-    d("[FCOCS]SMITHING:RefreshSetCategories")
+    --d("[FCOCS]SMITHING:RefreshSetCategories")
             local self = smith
             self.categoryTree:Reset()
             ZO_ClearTable(self.setNodeLookupData)
