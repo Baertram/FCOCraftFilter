@@ -2407,11 +2407,11 @@ local function FCOCraftFilter_CreateHooks()
                             if categoryStr == nil then return end
 
                             if masterCrafterSetsFavorites[customFavoriteId][setId] == nil then
-                                AddMenuItem(GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. ">" .. favIconStr .. ", " .. categoryStr, function()
+                                AddMenuItem(GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. favIconStr .. ", " .. categoryStr, function()
                                     changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, true)
                                 end)
                             else
-                                AddMenuItem(favIconStr .. "<" .. GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE).. ", " .. categoryStr, function()
+                                AddMenuItem(favIconStr .. GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE).. ", " .. categoryStr, function()
                                     changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, false)
                                 end)
                             end
