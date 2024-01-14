@@ -2562,7 +2562,7 @@ local function FCOCraftFilter_CreateHooks()
 
                 local nodeToSelect = nil
                 if self.selectedConsolidatedSetData and not self.selectedConsolidatedSetData:IsInstanceOf(ZO_ConsolidatedSmithingDefaultCategoryData)
-                    and self.setNodeLookupData ~= nil and self.selectedConsolidatedSetData:GetItemSetId() ~= nil then
+                    and self.setNodeLookupData ~= nil and self.selectedConsolidatedSetData.GetItemSetId ~= nil and self.selectedConsolidatedSetData:GetItemSetId() ~= nil then
                     nodeToSelect = self.setNodeLookupData[self.selectedConsolidatedSetData:GetItemSetId()]
                 end
 
