@@ -380,6 +380,7 @@ local customMasterCrafterSetStationFavoriteIdToName = {
     [FAVORITES_MAG_DD_CATEGORY_ID] = "Mag DD",
     [FAVORITES_HYBRID_DD_CATEGORY_ID] = "Hybrid DD",
 }
+local customMasterCrafterSetStationNameToFavoriteId = {}
 local defaultFavIconCategoryTexturs = { up = favoriteIcon, down = favoriteIcon, over = favoriteIcon }
 local customMasterCrafterSetStationFavoriteIdToTexture = {
     [FAVORITES_TANK_CATEGORY_ID] = defaultFavIconCategoryTexturs,
@@ -573,10 +574,10 @@ end
 
 --Sort the favorite sets into this new category
 local function buildFavoriteSetsDataAndAddToFavoritesCategory()
+    if isAnyMasterCrafterStationSetUnlocked() == false then return end
+
     local masterCrafterSetsFavorites = FCOCF.settingsVars.settings.masterCrafterSetsFavorites
     if masterCrafterSetsFavorites == nil then return end
-
-    if isAnyMasterCrafterStationSetUnlocked() == false then return end
 
     for customFavoriteId, _ in pairs(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS) do
         ZO_ClearTable(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS[customFavoriteId].sets)
@@ -971,6 +972,18 @@ local function toggleCurrentlyResearchedItemsFilter()
 end
 --FCOCF.ToggleCurrentlyResearchedItemsFilter = toggleCurrentlyResearchedItemsFilter
 
+local function buildCustomSetFavoriteCategoryNames()
+    local localizationVars = FCOCF.localizationVars.FCOCF_loc
+    customMasterCrafterSetStationFavoriteIdToName = {}
+    customMasterCrafterSetStationNameToFavoriteId = {}
+
+    for customMasterCrafterSetStationFavoriteId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do
+        local name = localizationVars["options_multisets_create_fav_" .. tostring(customMasterCrafterSetStationFavoriteId)]
+        customMasterCrafterSetStationFavoriteIdToName[customMasterCrafterSetStationFavoriteId] = name
+        customMasterCrafterSetStationNameToFavoriteId[name] = customMasterCrafterSetStationFavoriteId
+    end
+end
+
 -- Build the options menu
 local function BuildAddonMenu()
     local addonVars = FCOCF.addonVars
@@ -1005,6 +1018,8 @@ local function BuildAddonMenu()
 		end
 	end
 -- !!! RU Patch Section END
+
+    buildCustomSetFavoriteCategoryNames()
 
     local savedVariablesOptions = {
         [1] = localizationVars["options_savedVariables_dropdown_selection1"],
@@ -1246,7 +1261,49 @@ local function BuildAddonMenu()
             disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
             width="full",
         },
+        --==============================================================================
+        {
+            type = 'header',
+            name = localizationVars["options_header_grandmaster_crafting"],
+        },
+        {
+            type = "checkbox",
+            name = localizationVars["options_multisets_create_enable_favorites"],
+            tooltip = localizationVars["options_multisets_create_enable_favorites"],
+            getFunc = function() return settings.enableMasterCrafterSetsFavorites end,
+            setFunc = function(value) settings.enableMasterCrafterSetsFavorites = value
+            end,
+            default = defaults.enableMasterCrafterSetsFavorites,
+            width="full",
+        },
     }
+    --Custom Grand Master crafting stations set craete favorite categories, sorted by name
+    local sortedCustomMasterCrafterSetStationFavoriteIds = {}
+    for customFavoriteCategoryId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do
+        if isEnabled == true then
+            table.insert(sortedCustomMasterCrafterSetStationFavoriteIds, customMasterCrafterSetStationFavoriteIdToName[customFavoriteCategoryId])
+        end
+    end
+    if not ZO_IsTableEmpty(sortedCustomMasterCrafterSetStationFavoriteIds) then
+        table.sort(sortedCustomMasterCrafterSetStationFavoriteIds)
+        for _, name in ipairs(sortedCustomMasterCrafterSetStationFavoriteIds) do
+            local customFavoriteCategoryId = customMasterCrafterSetStationFavoriteIdToName[name]
+            if customFavoriteCategoryId ~= nil then
+                optionsTable[#optionsTable + 1] = {
+                    type = "checkbox",
+                    name = localizationVars["options_multisets_create_enable_favorite"],
+                    tooltip = localizationVars["options_multisets_create_enable_favorite_TT"],
+                    getFunc = function() return settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId] end,
+                    setFunc = function(value) settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId] = value
+                    end,
+                    default = defaults.settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId],
+                    disabled = function() return not settings.enableMasterCrafterSetsFavorites end,
+                    width="full",
+                }
+            end
+        end
+    end
+
     -- END OF OPTIONS TABLE
     LAM:RegisterOptionControls(addonVars.gAddonName .. "_LAMPanel", optionsTable)
 
@@ -2312,6 +2369,8 @@ local function FCOCraftFilter_CreateHooks()
                     if setId == nil then return end
 
                     local settings = FCOCF.settingsVars.settings
+                    local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
+                    if not isSetFavoriteCategoriesEnabledInTotal then return end
                     local masterCrafterSetsFavorites = settings.masterCrafterSetsFavorites
                     if masterCrafterSetsFavorites == nil then return end
                     local masterCrafterSetsFavoritesEnabled = settings.masterCrafterSetsFavoritesEnabled
@@ -2347,11 +2406,68 @@ local function FCOCraftFilter_CreateHooks()
         end, "FCOChangeStuff_Smithing_Create_SetEntry_ContextMenu")
     end)
 
+    local isSmithingRefreshSetCategoriesActive = false
+    ZO_PreHook(smith, "RefreshSetCategories", function()
+d("[FCOCF]smith.RefreshSetCategories - PreHook")
+        isSmithingRefreshSetCategoriesActive = true
+    end)
+    --[[
+    SecurePostHook(smith, "RefreshSetCategories", function()
+d("[FCOCF]smith.RefreshSetCategories - PostHook")
+        isSmithingRefreshSetCategoriesActive = false
+    end)
+    ]]
 
+    --Will becalled from SMITHING:RefreshSetCategories -> self.setContainer:SetHidden(false)
+    -->self:AddSetCategory(CONSOLIDATED_SMITHING_DEFAULT_CATEGORY_DATA)
+    local suppressSmithingAddSetCategoryPostHook = false
+    SecurePostHook(smith, "AddSetCategory", function(selfVar, categoryData)
+        if not suppressSmithingAddSetCategoryPostHook and isSmithingRefreshSetCategoriesActive == true and categoryData == CONSOLIDATED_SMITHING_DEFAULT_CATEGORY_DATA then
+d("[FCOCF]smith.AddSetCategory-categoryData: " .. tos(categoryData))
+            isSmithingRefreshSetCategoriesActive = false
+            if isAnyMasterCrafterStationSetUnlocked() == false then return end
+
+            local self = smith
+            if self.mode == SMITHING_MODE_CREATION and ZO_Smithing_IsConsolidatedStationCraftingMode() then
+                --Add the special set favorites category now first
+                buildFavoriteSetsDataAndAddToFavoritesCategory()
+
+                local settings = FCOCF.settingsVars.settings
+                local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
+                if not isSetFavoriteCategoriesEnabledInTotal then
+d("<abort NOT ENABLED AT ALL")
+                    return
+                end
+
+                local sortedCustomCategoryData = {}
+                for customFavoriteId, customFavoriteCategoryData in pairs(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS) do
+                    if settings.masterCrafterSetsFavoritesEnabled[customFavoriteId] == true then
+d(">enabled categoryId: " ..tos(customFavoriteId))
+                        table.insert(sortedCustomCategoryData, customFavoriteCategoryData)
+                    end
+                end
+                table.sort(sortedCustomCategoryData, ZO_ConsolidatedSmithingSetCategoryData.CompareTo)
+                for _, customFavoriteCategoryData in ipairs(sortedCustomCategoryData) do
+                    suppressSmithingAddSetCategoryPostHook = true
+                    self:AddSetCategory(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS[customFavoriteCategoryData:GetId()])
+                    suppressSmithingAddSetCategoryPostHook = false
+                end
+
+                --After that the other set categories should be added now in original code of SMITHING:RefreshSetCategories
+                --...
+            end
+        end
+    end)
+
+    --[[
     local origSmithingRefreshSetCategories = smith.RefreshSetCategories
     function smith.RefreshSetCategories()
+d("[FCOCS]SMITHING:RefreshSetCategories")
         if isAnyMasterCrafterStationSetUnlocked() == false then return origSmithingRefreshSetCategories() end
---d("[FCOCS]SMITHING:RefreshSetCategories")
+        local settings = FCOCF.settingsVars.settings
+        local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
+        if not isSetFavoriteCategoriesEnabledInTotal then return origSmithingRefreshSetCategories() end
+d(">1")
         local self = smith
         self.categoryTree:Reset()
         ZO_ClearTable(self.setNodeLookupData)
@@ -2395,11 +2511,48 @@ local function FCOCraftFilter_CreateHooks()
             self.setContainer:SetHidden(true)
         end
     end
+    ]]
+
+    ZO_PreHook(smith, "RefreshActiveConsolidatedSmithingSet", function()
+d("[FCOCS]PreHook - SMITHING:RefreshActiveConsolidatedSmithingSet")
+        if isAnyMasterCrafterStationSetUnlocked() == false then
+d("<abort 1")
+            return false
+        end
+        local settings = FCOCF.settingsVars.settings
+        local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
+        if not isSetFavoriteCategoriesEnabledInTotal then
+d("<abort NOT ENABLED AT ALL")
+            return false
+        end
+        --If this is a consolidated crafting station, make sure the active set matches the current selection
+        if ZO_Smithing_IsConsolidatedStationCraftingMode() then
+            self = smith
+            local selectedData = self.categoryTree:GetSelectedData()
+            if selectedData and selectedData.GetSetIndex == nil then
+                --Special new added favorite categories?
+                if selectedData:IsInstanceOf(FCOCS_ConsolidatedSmithingSetFavoriteData) then
+                    SetActiveConsolidatedSmithingSetByIndex(nil)
+                    self.creationPanel:DirtyAllLists()
+                    self.creationPanel:RefreshAvailableFilters()
+                    return true
+                end
+            end
+        end
+        return false
+    end)
+    --[[
 
     local origSmithingRefreshActiveConsolidatedSmithingSet = smith.RefreshActiveConsolidatedSmithingSet
+    local settings = FCOCF.settingsVars.settings
+    local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
+    if not isSetFavoriteCategoriesEnabledInTotal then
+        origSmithingRefreshActiveConsolidatedSmithingSet()
+    else
+    end
     function smith.RefreshActiveConsolidatedSmithingSet()
-        if isAnyMasterCrafterStationSetUnlocked() == false then return origSmithingRefreshActiveConsolidatedSmithingSet() end
---d("[FCOCS]SMITHING:RefreshActiveConsolidatedSmithingSet")
+        if isAnyMasterCrafterStationSetUnlocked() == false then return end
+        --d("[FCOCS]SMITHING:RefreshActiveConsolidatedSmithingSet")
         --If this is a consolidated crafting station, make sure the active set matches the current selection
         if ZO_Smithing_IsConsolidatedStationCraftingMode() then
             self = smith
@@ -2413,7 +2566,7 @@ local function FCOCraftFilter_CreateHooks()
                 elseif selectedData:IsInstanceOf(FCOCS_ConsolidatedSmithingSetFavoriteData) then
                     --Favorites category
                     --No favorites saved yet
-                    if selectedData == nil or selectedData.GetSetIndex == nil or selectedData:GetSetIndex() == nil  then
+                    if selectedData.GetSetIndex == nil or selectedData:GetSetIndex() == nil  then
                         SetActiveConsolidatedSmithingSetByIndex(nil)
                     else
                         --Any favorites saved yet
@@ -2429,6 +2582,7 @@ local function FCOCraftFilter_CreateHooks()
             end
         end
     end
+    ]]
 
 
     --[[
@@ -2468,7 +2622,7 @@ local function FCOCraftFilter_CreateHooks()
             zo_callLater(function()
                 FCOCraftFilter_PreHookButtonHandler(filterPanelId, "SMITHING refine SetMode")
             end, 10)
-        --Deconstruction
+            --Deconstruction
         elseif     mode == SMITHING_MODE_DECONSTRUCTION then
             filterPanelId = LF_SMITHING_DECONSTRUCT
             --[[
@@ -2525,9 +2679,9 @@ local function FCOCraftFilter_CreateHooks()
                         end, 10)
             ]]
         end
-            hideIncludeBankedItemsCheckbox(filterPanelId)
-            --Go on with original function
-            return false
+        hideIncludeBankedItemsCheckbox(filterPanelId)
+        --Go on with original function
+        return false
     end
     SecurePostHook(zo_smith, "SetMode", smithingSetMode)
 
@@ -2695,7 +2849,7 @@ local function FCOCraftFilter_CreateHooks()
 
         --Universal Decon panel shown and crafting table was opened recently?
         if isShown == true and FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened then
---d(">UniversalDecon panel, and crafting table opened recently!")
+            --d(">UniversalDecon panel, and crafting table opened recently!")
             FCOCF.preventerVars.wasCraftingTableWithoutCraftingTypeRecentlyOpened = false
             setCraftingTabButtonTo("universalDeconstruction", true, FCOCF.settingsVars.settings.defaultCraftTabDescriptor["universalDeconstruction"], universalDeconSelectedTabNow)
         elseif not isShown then
@@ -2871,10 +3025,11 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
             ["universalDeconstruction"] =       "all",
             ["retrait"] =                       "retraitTab",
         },
+        enableMasterCrafterSetsFavorites = false,
         masterCrafterSetsFavoritesEnabled = {},
         masterCrafterSetsFavorites = {},
     }
-    for customFavoriteId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do
+    for customFavoriteId, _ in pairs(customMasterCrafterSetStationFavoriteIds) do
         defaults.masterCrafterSetsFavorites[customFavoriteId] = {}
         defaults.masterCrafterSetsFavoritesEnabled[customFavoriteId] = true
     end
