@@ -568,7 +568,7 @@ local function rebuildEnabledSmithingCreateMasterCrafterCustomFavoriteCategories
 
     for customFavoriteId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do
         FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS[customFavoriteId] = nil
-        if isEnabled then
+        if isEnabled == true then
             --Enabled in settings too?
             if masterCrafterSetsFavoritesEnabled[customFavoriteId] == true then
                 FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS[customFavoriteId] = FCOCS_ConsolidatedSmithingSetFavoriteData:New(customFavoriteId)
@@ -2394,7 +2394,7 @@ local function FCOCraftFilter_CreateHooks()
                         --d(">setId: " .. tos(setId))
                         if setId == nil then return end
 
-                        local settings = FCOCF.settingsVars.settings
+                        settings = FCOCF.settingsVars.settings
                         local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
                         if not isSetFavoriteCategoriesEnabledInTotal then return end
                         local masterCrafterSetsFavorites = settings.masterCrafterSetsFavorites
@@ -2533,10 +2533,16 @@ local function FCOCraftFilter_CreateHooks()
                 self.setContainer:SetHidden(false)
 
                 --Add the special set favorites category first
+                rebuildEnabledSmithingCreateMasterCrafterCustomFavoriteCategories()
                 buildFavoriteSetsDataAndAddToFavoritesCategory()
+
+                settings = FCOCF.settingsVars.settings
+                local masterCrafterSetsFavoritesEnabled = settings.masterCrafterSetsFavoritesEnabled
                 local sortedCustomCategoryData = {}
                 for customFavoriteId, customFavoriteCategoryData in pairs(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS) do
-                    table.insert(sortedCustomCategoryData, customFavoriteCategoryData)
+                    if masterCrafterSetsFavoritesEnabled[customFavoriteId] then
+                        table.insert(sortedCustomCategoryData, customFavoriteCategoryData)
+                    end
                 end
                 table.sort(sortedCustomCategoryData, ZO_ConsolidatedSmithingSetCategoryData.CompareTo)
                 for _, customFavoriteCategoryData in ipairs(sortedCustomCategoryData) do
