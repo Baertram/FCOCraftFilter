@@ -2408,7 +2408,7 @@ local function FCOCraftFilter_CreateHooks()
 
     local isSmithingRefreshSetCategoriesActive = false
     ZO_PreHook(smith, "RefreshSetCategories", function()
-d("[FCOCF]smith.RefreshSetCategories - PreHook")
+--d("[FCOCF]smith.RefreshSetCategories - PreHook")
         isSmithingRefreshSetCategoriesActive = true
     end)
     --[[
@@ -2423,7 +2423,7 @@ d("[FCOCF]smith.RefreshSetCategories - PostHook")
     local suppressSmithingAddSetCategoryPostHook = false
     SecurePostHook(smith, "AddSetCategory", function(selfVar, categoryData)
         if not suppressSmithingAddSetCategoryPostHook and isSmithingRefreshSetCategoriesActive == true and categoryData == CONSOLIDATED_SMITHING_DEFAULT_CATEGORY_DATA then
-d("[FCOCF]smith.AddSetCategory-categoryData: " .. tos(categoryData))
+--d("[FCOCF]smith.AddSetCategory-categoryData: " .. tos(categoryData))
             isSmithingRefreshSetCategoriesActive = false
             if isAnyMasterCrafterStationSetUnlocked() == false then return end
 
@@ -2435,14 +2435,14 @@ d("[FCOCF]smith.AddSetCategory-categoryData: " .. tos(categoryData))
                 local settings = FCOCF.settingsVars.settings
                 local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
                 if not isSetFavoriteCategoriesEnabledInTotal then
-d("<abort NOT ENABLED AT ALL")
+--d("<abort NOT ENABLED AT ALL")
                     return
                 end
 
                 local sortedCustomCategoryData = {}
                 for customFavoriteId, customFavoriteCategoryData in pairs(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS) do
                     if settings.masterCrafterSetsFavoritesEnabled[customFavoriteId] == true then
-d(">enabled categoryId: " ..tos(customFavoriteId))
+--d(">enabled categoryId: " ..tos(customFavoriteId))
                         table.insert(sortedCustomCategoryData, customFavoriteCategoryData)
                     end
                 end
@@ -2514,15 +2514,15 @@ d(">1")
     ]]
 
     ZO_PreHook(smith, "RefreshActiveConsolidatedSmithingSet", function()
-d("[FCOCS]PreHook - SMITHING:RefreshActiveConsolidatedSmithingSet")
+--d("[FCOCS]PreHook - SMITHING:RefreshActiveConsolidatedSmithingSet")
         if isAnyMasterCrafterStationSetUnlocked() == false then
-d("<abort 1")
+--d("<abort 1")
             return false
         end
         local settings = FCOCF.settingsVars.settings
         local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
         if not isSetFavoriteCategoriesEnabledInTotal then
-d("<abort NOT ENABLED AT ALL")
+--d("<abort NOT ENABLED AT ALL")
             return false
         end
         --If this is a consolidated crafting station, make sure the active set matches the current selection
