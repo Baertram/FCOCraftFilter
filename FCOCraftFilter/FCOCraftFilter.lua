@@ -1295,10 +1295,10 @@ local function BuildAddonMenu()
     end
     if not ZO_IsTableEmpty(sortedCustomMasterCrafterSetStationFavoriteIds) then
         table.sort(sortedCustomMasterCrafterSetStationFavoriteIds)
-d(">sorted names of custom category IDs")
-        for _, name in ipairs(sortedCustomMasterCrafterSetStationFavoriteIds) do
+--d(">sorted names of custom category IDs")
+        for favCounter, name in ipairs(sortedCustomMasterCrafterSetStationFavoriteIds) do
             local customFavoriteCategoryId = customMasterCrafterSetStationNameToFavoriteId[name]
-d(">name: " ..tos(name) .. "; ID: " ..tos(customFavoriteCategoryId))
+--d(">name: " ..tos(name) .. "; ID: " ..tos(customFavoriteCategoryId))
             if customFavoriteCategoryId ~= nil then
                 optionsTable[#optionsTable + 1] = {
                     type = "checkbox",
@@ -1313,8 +1313,8 @@ d(">name: " ..tos(name) .. "; ID: " ..tos(customFavoriteCategoryId))
                 }
                 optionsTable[#optionsTable + 1] = {
                     type = "editbox",
-                    name = name,
-                    tooltip = name,
+                    name = GetString(SI_COLLECTIONS_FAVORITES_CATEGORY_HEADER) .. "#" .. tos(favCounter),
+                    tooltip = GetString(SI_COLLECTIONS_FAVORITES_CATEGORY_HEADER) .. "#" .. tos(favCounter),
                     getFunc = function() return getCustomSetFavoriteCategoryName(customFavoriteCategoryId) end,
                     setFunc = function(value) settings.masterCrafterSetsFavoritesNames[customFavoriteCategoryId] = value
                     end,
@@ -2403,7 +2403,7 @@ local function FCOCraftFilter_CreateHooks()
                             if masterCrafterSetsFavorites[customFavoriteId] == nil then return end
                             local isSavedFavoritesEmpty = ZO_IsTableEmpty(masterCrafterSetsFavorites[customFavoriteId])
 
-                            local categoryStr = GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. ": " .. tos(customMasterCrafterSetStationFavoriteIdToName[customFavoriteId])
+                            local categoryStr = GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. ": " .. getCustomSetFavoriteCategoryName(customFavoriteId)
                             if categoryStr == nil then return end
 
                             if masterCrafterSetsFavorites[customFavoriteId][setId] == nil then
