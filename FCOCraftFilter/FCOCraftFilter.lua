@@ -19,6 +19,7 @@ local libFilters_IsUniversalDeconstructionSupportedFilterType
 local libFilters_IsUniversalDeconstructionPanelShown
 local libFilters_getUniversalDeconstructionPanelActiveTabFilterType
 local LAM
+local LCM
 
 local tos = tostring
 
@@ -2409,6 +2410,12 @@ d("Childless header was selected")
                         --d(">setId: " .. tos(setId))
                         if setId == nil then return end
 
+                        local contextMenuItemAddFunc = AddMenuItem
+                        --LibCustomMenu is loaded?
+                        if LCM ~= nil then
+                            contextMenuItemAddFunc = AddCustomMenuItem
+                        end
+
                         settings = FCOCF.settingsVars.settings
                         isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
                         if not isSetFavoriteCategoriesEnabledInTotal then return end
@@ -2422,20 +2429,26 @@ d("Childless header was selected")
                                 if masterCrafterSetsFavorites[customFavoriteId] == nil then return end
                                 local isSavedFavoritesEmpty = ZO_IsTableEmpty(masterCrafterSetsFavorites[customFavoriteId])
 
-                                local categoryStr = GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. ": " .. getCustomSetFavoriteCategoryName(customFavoriteId)
+                                local categoryName = GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. ": " .. getCustomSetFavoriteCategoryName(customFavoriteId)
+                                local categoryStr = ""
                                 if categoryStr == nil then return end
+                                if LCM == nil then
+                                    categoryStr = " [" .. categoryName .. "]"
+                                else
+                                    AddCustomMenuItem(categoryName, function()   end, MENU_ADD_OPTION_HEADER)
+                                end
 
                                 if masterCrafterSetsFavorites[customFavoriteId][setId] == nil then
-                                    AddMenuItem(GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. favIconStr .. ", " .. categoryStr, function()
+                                    contextMenuItemAddFunc("+" .. favIconStr .. GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. categoryStr, function()
                                         changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, true)
                                     end)
                                 else
-                                    AddMenuItem(favIconStr .. GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE).. ", " .. categoryStr, function()
+                                    contextMenuItemAddFunc("-" .. favIconStr .. GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE) .. categoryStr, function()
                                         changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, false)
                                     end)
                                 end
                                 if not isSavedFavoritesEmpty then
-                                    AddMenuItem(favIconStr .. " " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1).. ", " .. categoryStr, function()
+                                    contextMenuItemAddFunc(favIconStr .. "   " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1).. categoryStr, function()
                                         changeMasterCrafterSetFavorites(nil, nil, customFavoriteId, false, true)
                                     end)
                                 end
@@ -3020,6 +3033,7 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
 
     --Create the settings panel object of libAddonMenu 2.0
     LAM = LibAddonMenu2
+    LCM = LibCustomMenu
 
 	addonVars.gAddonLoaded = false
 
