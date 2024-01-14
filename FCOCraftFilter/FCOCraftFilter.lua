@@ -2448,7 +2448,7 @@ d("Childless header was selected")
                                     end)
                                 end
                                 if not isSavedFavoritesEmpty then
-                                    contextMenuItemAddFunc(favIconStr .. "   " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1).. categoryStr, function()
+                                    contextMenuItemAddFunc(favIconStr .. "   |cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r" .. categoryStr, function()
                                         changeMasterCrafterSetFavorites(nil, nil, customFavoriteId, false, true)
                                     end)
                                 end
