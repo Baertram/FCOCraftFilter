@@ -1307,7 +1307,7 @@ d(">name: " ..tos(name) .. "; ID: " ..tos(customFavoriteCategoryId))
                     getFunc = function() return settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId] end,
                     setFunc = function(value) settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId] = value
                     end,
-                    default = defaults.settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId],
+                    default = defaults.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId],
                     disabled = function() return not settings.enableMasterCrafterSetsFavorites end,
                     width="half",
                 }
