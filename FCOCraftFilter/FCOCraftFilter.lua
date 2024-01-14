@@ -2395,7 +2395,7 @@ d("Childless header was selected")
         end
 ]]
 
-        local origSmithingCreateTreeListSetEntryData = ZO_ShallowTableCopy(smith.categoryTree.templateInfo["ZO_ConsolidatedSmithingSetNavigationEntry"])
+        local origSmithingCreateTreeListSetEntryData = smith.categoryTree.templateInfo["ZO_ConsolidatedSmithingSetNavigationEntry"]
         --Add the context menu to the setup functions
         --SET IITEM
         --smith.categoryTree.templateInfo["ZO_ConsolidatedSmithingSetNavigationEntry"].setupFunction = newSmithingCreateTreeListSetEntrySetupFunc
@@ -2410,7 +2410,7 @@ d("Childless header was selected")
                         if setId == nil then return end
 
                         settings = FCOCF.settingsVars.settings
-                        local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
+                        isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
                         if not isSetFavoriteCategoriesEnabledInTotal then return end
                         local masterCrafterSetsFavorites = settings.masterCrafterSetsFavorites
                         if masterCrafterSetsFavorites == nil then return end
