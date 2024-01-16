@@ -2166,10 +2166,10 @@ end
 
 --Check if the retrait station is shown and add the button now
 local function FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton(craftSkill)
-d("FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton-craftSkill:" .. tos(craftSkill))
+--d("FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton-craftSkill:" .. tos(craftSkill))
     if craftSkill == CRAFTING_TYPE_INVALID then
 
-d(">found retrait: " ..tos(libFilters:IsRetraitStationShown()))
+--d(">found retrait: " ..tos(libFilters:IsRetraitStationShown()))
         if libFilters:IsRetraitStationShown() == true then
             updateRetraitButtons(craftSkill)
         else
