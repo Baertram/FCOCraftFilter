@@ -30,6 +30,7 @@ FCOCF_SHOW_ALL              =  1
 FCOCF_ONLY_SHOW_INVENTORY   =  2
 FCOCF_ONLY_SHOW_BANKED      =  3
 FCOCF_ONLY_SHOW_CRAFTBAG    =  4
+FCOCF_ONLY_SHOW_WORN        =  5
 FCOCF_DO_NOT_SHOW_CRAFTBAG  = -4
 
 FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION = "UniversalDeconstruction"
@@ -41,7 +42,7 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.51 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.6.3' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptions 		= '0.6.4' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -175,6 +176,12 @@ local universalDeconPanelInvControl = zoVars.universalDeconPanelInvControl
 zoVars.universalDeconInvTabs                                      = GetControl(zoVars.universalDeconPanelInvControl, "Tabs") --ZO_UniversalDeconstructionTopLevel_KeyboardPanelInventoryTabs
 local universalDeconInvTabs = zoVars.universalDeconInvTabs
 
+--LibFilters filterTypes where the BAG_WORN should also show items in the results list for "SHOW INVENTORY" FCOCraftFilter
+local isWornBagFilterTypeAndShouldShowWithInventory = {
+    [LF_RETRAIT] =              true,
+    [LF_SMITHING_IMPROVEMENT] = true,
+    [LF_JEWELRY_IMPROVEMENT] =  true,
+}
 
 
 local controlsForChecks = {
@@ -347,6 +354,7 @@ local textureOnlyCraftBag   = "/esoui/art/inventory/inventory_tabicon_craftbag_d
 local textureNoCraftBag     = "/esoui/art/hud/gamepad/gp_loothistory_icon_craftbag.dds"
 local textureCurrentlyResearchedDown = "/esoui/art/crafting/smithing_tabicon_research_disabled.dds"
 local textureCurrentlyResearched = "/esoui/art/tutorial/smithing_tabicon_research_up.dds"
+local textureOnlyWorn       = "EsoUI/Art/WritAdvisor/advisor_tabIcon_equip_up.dds"
 local favoriteIcon          = "EsoUI/Art/Collections/Favorite_StarOnly.dds"
 local favIconStr = zo_iconTextFormatNoSpace(favoriteIcon, 24, 24, "")
 
@@ -686,6 +694,8 @@ local function getCurrentButtonStateAndTexture(isUniversalDecon, isResearchShowO
     local isRefinementPanel = (lastPanel == LF_SMITHING_REFINE or lastPanel == LF_JEWELRY_REFINE) or false
     local filterApplied
 
+--d("[FCOCF]getCurrentButtonStateAndTexture-isUniversalDecon: " .. tos(isUniversalDecon) ..", isResearchCurrently: " ..tos(isResearchShowOnlyCurrentlyResearched))
+
     if isResearchShowOnlyCurrentlyResearched then
         filterApplied = settings.horizontalScrollBarFilterApplied[lastCraftingType][lastPanel]
         currentTexture = (filterApplied == true and textureCurrentlyResearchedDown or textureCurrentlyResearched)
@@ -694,10 +704,15 @@ local function getCurrentButtonStateAndTexture(isUniversalDecon, isResearchShowO
         --Check the current settings at the given crafting panel and return the next buttons state and texture
         filterApplied = settings.filterApplied[lastCraftingType][lastPanel]
 
+--d(">filterApplied: " .. tos(filterApplied) ..", lastCraftingType: " ..tos(lastCraftingType) .. ", lastPanel: " ..tos(lastPanel))
+
         if filterApplied == FCOCF_SHOW_ALL then
+--d(">ALL")
             currentTexture = textureAll
             currentTooltip = localizationVars["button_FCO_currently_show_all_tooltip"] .. "\n" .. localizationVars["button_FCO_hide_bank_tooltip"]
+
         elseif filterApplied == FCOCF_ONLY_SHOW_INVENTORY then
+--d(">SHOW INV")
             currentTexture = textureOnlyInventory
             if isRefinementPanel == true then
                 if settings.enableMediumFilters then
@@ -706,20 +721,39 @@ local function getCurrentButtonStateAndTexture(isUniversalDecon, isResearchShowO
                     currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_craftbag_tooltip"]
                 end
             else
-                if settings.enableMediumFilters then
-                    currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_bank_tooltip"]
+                if isWornBagFilterTypeAndShouldShowWithInventory[lastPanel] and settings.enableOnlyWornFilters then
+--d(">>WORN BAG")
+                    currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_worn_tooltip"]
                 else
-                    currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
+--d(">>NON WORN")
+                    if settings.enableMediumFilters then
+                        currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_bank_tooltip"]
+                    else
+                        currentTooltip = localizationVars["button_FCO_currently_hide_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
+                    end
                 end
             end
+
+        elseif filterApplied == FCOCF_ONLY_SHOW_WORN and isWornBagFilterTypeAndShouldShowWithInventory[lastPanel] and settings.enableOnlyWornFilters then
+--d(">SHOW WORN")
+            currentTexture = textureOnlyWorn
+            if settings.enableMediumFilters then
+                currentTooltip = localizationVars["button_FCO_currently_show_only_worn_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_bank_tooltip"]
+            else
+                currentTooltip = localizationVars["button_FCO_currently_show_only_worn_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
+            end
+
         elseif filterApplied == FCOCF_ONLY_SHOW_BANKED then
+--d(">SHOW BANKED")
             currentTexture = textureOnlyBank
             if isRefinementPanel == true then
                 currentTooltip = localizationVars["button_FCO_currently_show_only_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_only_craftbag_tooltip"]
             else
                 currentTooltip = localizationVars["button_FCO_currently_show_only_bank_tooltip"] .. "\n" .. localizationVars["button_FCO_show_all_tooltip"]
             end
+
         elseif isRefinementPanel == true then
+--d(">SHOW CRAFTBAG")
             if filterApplied == FCOCF_ONLY_SHOW_CRAFTBAG then
                 currentTexture = textureOnlyCraftBag
                 currentTooltip = localizationVars["button_FCO_currently_show_only_craftbag_tooltip"] .. "\n" .. localizationVars["button_FCO_hide_craftbag_tooltip"]
@@ -729,6 +763,8 @@ local function getCurrentButtonStateAndTexture(isUniversalDecon, isResearchShowO
             end
         end
     end
+
+--d(">currentTexture: " .. tos(currentTexture) ..", currentTooltip: " ..tos(currentTooltip))
 
     return filterApplied, currentTexture, currentTooltip, isRefinementPanel
 end
@@ -1121,6 +1157,26 @@ local function BuildAddonMenu()
             width="full",
         },
         {
+            type = "checkbox",
+            name = localizationVars["options_enable_only_worn_filter"],
+            tooltip = localizationVars["options_enable_only_worn_filter_TT"],
+            getFunc = function() return settings.enableOnlyWornFilters end,
+            setFunc = function(value) settings.enableOnlyWornFilters = value
+            end,
+            default = defaults.enableOnlyWornFilters,
+            width="full",
+        },
+        {
+            type = "checkbox",
+            name = localizationVars["options_show_only_worn_at_only_invetory"],
+            tooltip = localizationVars["options_show_only_worn_at_only_invetory_TT"],
+            getFunc = function() return settings.showWornItemsAtOnlyInventory end,
+            setFunc = function(value) settings.showWornItemsAtOnlyInventory = value
+            end,
+            default = defaults.showWornItemsAtOnlyInventory,
+            width="full",
+        },
+        {
             type = 'header',
             name = localizationVars["options_header_research"],
         },
@@ -1440,10 +1496,11 @@ local function isResearchListDialogShown()
     return isResearchDialogShown
 end
 
+
 --Callback function for the filter: This function will hide/show the items at the crafting station panel
 --return false: hide the slot
 --return true: show the slot
-local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex)
+local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex, filterTag)
     local locVars = FCOCF.locVars
     local lastPanel = locVars.gLastPanel
     local lastCraftingType = locVars.gLastCraftingType
@@ -1456,9 +1513,22 @@ local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex)
     local resultVar = true
     if filterAppliedSettings == FCOCF_ONLY_SHOW_INVENTORY then
         if bagId ~= BAG_BACKPACK then
+            --Is retrait shown etc? Worn items should not be filtered then and show at "Only inventory" too
+            if bagId ~= BAG_WORN then
+                resultVar = false
+            else
+                --Show worn items at "Only inventory" too=
+                if filterTag ~= nil and isWornBagFilterTypeAndShouldShowWithInventory[filterTag] == true and settings.showWornItemsAtOnlyInventory == true then
+                    resultVar = true
+                else
+                    resultVar = false
+                end
+            end
+        end
+    elseif filterAppliedSettings == FCOCF_ONLY_SHOW_WORN then
+        if bagId ~= BAG_WORN or filterTag == nil or not isWornBagFilterTypeAndShouldShowWithInventory[filterTag] then
             resultVar = false
         end
-
     elseif filterAppliedSettings == FCOCF_ONLY_SHOW_BANKED then
         if (bagId ~= BAG_BANK and bagId ~= BAG_SUBSCRIBER_BANK) then
             resultVar = false
@@ -1474,6 +1544,13 @@ local function FCOCraftFilter_FilterCallbackFunction(bagId, slotIndex)
             resultVar = false
         end
     end
+
+    --[[
+    if bagId == BAG_WORN then
+        d("[FCOCF]" .. GetItemLink(bagId, slotIndex) ..": " ..tos(resultVar) .. "; filterApplied: " .. tos(filterAppliedSettings) .."; bag: " .. tos(bagId) .. "; filterTag: " ..tos(filterTag))
+    end
+    ]]
+
     --Return the result variable now
     return resultVar
 end
@@ -1551,10 +1628,13 @@ end
 local function FCOCraftFilter_RegisterFilter(filterName, libFiltersInventoryType, callbackFunction)
     if   libFilters == nil or filterName == nil or filterName == "" or libFiltersInventoryType == nil
       or callbackFunction == nil or type(callbackFunction) ~= "function" then return end
-----d("[FCOCraftFilter_RegisterFilter] filterName: FCOCraftFilter_" .. filterName .. ", libFiltersInventoryType: " .. libFiltersInventoryType)
+d("[FCOCraftFilter_RegisterFilter] filterName: FCOCraftFilter_" .. filterName .. ", libFiltersInventoryType: " .. libFiltersInventoryType)
     if(not libFilters:IsFilterRegistered("FCOCraftFilter_" .. tos(filterName))) then
-----d("--> register now")
-        libFilters:RegisterFilter("FCOCraftFilter_" .. tos(filterName), libFiltersInventoryType, callbackFunction)
+        ----d("--> register now")
+        libFilters:RegisterFilter("FCOCraftFilter_" .. tos(filterName), libFiltersInventoryType,
+                function(bagId, slotIndex)
+                    return callbackFunction(bagId, slotIndex, libFiltersInventoryType)
+                end)
     end
 end
 
@@ -1762,7 +1842,7 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
             button:SetAnchor(alignMain, alignControl, alignBackup, left, top)
 
             --Texture or text?
-            if (text ~= nil) then
+            if text ~= nil then
                 --Text
                 --Set the button's font
                 if font == nil then
@@ -1784,6 +1864,7 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
                     button.onlyCraftbagTexture  = textureOnlyCraftBag
                     button.noCraftbagTexture    = textureNoCraftBag
                     button.onlyInventory        = textureOnlyInventory
+                    button.onlyWornTexture      = textureOnlyWorn
                 end
 
                 --Texture
@@ -1797,6 +1878,7 @@ local function AddButton(parent, name, callbackFunction, text, font, tooltipText
                 texture:SetAnchorFill()
 
                 local filterApplied, texturePath, _, isRefinementPanel = getCurrentButtonStateAndTexture(button.isUniversalDecon, button.isResearchShowOnlyCurrentlyResearched)
+--d(">texturePath: " ..tos(texturePath))
                 texture:SetTexture(texturePath)
                 colorizeTextureAccordingToFilterApplied(texture, filterApplied, isRefinementPanel, button.isResearchShowOnlyCurrentlyResearched)
             end
@@ -1860,9 +1942,18 @@ local function FCOCraftFilter_ChangeCraftingStationFilterSettingsByButtonClicked
 --d("[FCOCF]FCOCraftFilter_ChangeCraftingStationBankSettings-comingFrom: "
         --..tos(comingFrom).. ", enableMediumFilters: " ..tos(settings.enableMediumFilters) .. ", lastCraftingType: " ..tos(locVars.gLastCraftingType)
         --.. ", currentSetting: " .. tos(settings.filterApplied[locVars.gLastCraftingType][comingFrom]))
+
     if settings.filterApplied[lastCraftingType][comingFrom] == FCOCF_SHOW_ALL then
         settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_ONLY_SHOW_INVENTORY
+
     elseif settings.filterApplied[lastCraftingType][comingFrom] == FCOCF_ONLY_SHOW_INVENTORY then
+        if settings.enableOnlyWornFilters and isWornBagFilterTypeAndShouldShowWithInventory[comingFrom] == true then
+            settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_ONLY_SHOW_WORN
+        else
+            settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_ONLY_SHOW_BANKED
+        end
+
+    elseif settings.filterApplied[lastCraftingType][comingFrom] == FCOCF_ONLY_SHOW_WORN then
         if settings.enableMediumFilters then
             settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_ONLY_SHOW_BANKED
         else
@@ -1872,20 +1963,26 @@ local function FCOCraftFilter_ChangeCraftingStationFilterSettingsByButtonClicked
                 settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_SHOW_ALL
             end
         end
+
     elseif settings.filterApplied[lastCraftingType][comingFrom] == FCOCF_ONLY_SHOW_BANKED then
         if isRefinementPanel then
             settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_ONLY_SHOW_CRAFTBAG
         else
             settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_SHOW_ALL
         end
+
     elseif isRefinementPanel and settings.filterApplied[lastCraftingType][comingFrom] == FCOCF_ONLY_SHOW_CRAFTBAG then
         settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_DO_NOT_SHOW_CRAFTBAG
+
     elseif isRefinementPanel and settings.filterApplied[lastCraftingType][comingFrom] == FCOCF_DO_NOT_SHOW_CRAFTBAG then
         settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_SHOW_ALL
+
     else
         --Fallback to show all
         settings.filterApplied[lastCraftingType][comingFrom] = FCOCF_SHOW_ALL
     end
+
+--d("<New filterApplied: " ..tos(settings.filterApplied[lastCraftingType][comingFrom]))
 end
 
 --Function to update the settings "hide/show bank items at crafting station", update the filter and refresh the visible items
@@ -1905,19 +2002,19 @@ local function FCOCraftFilter_CraftingStationUpdateBankItemOption(comingFrom, ch
     if changeSettings == true then
         FCOCraftFilter_ChangeCraftingStationFilterSettingsByButtonClicked(comingFrom, isUniversalDecon)
     end
---d(">>> NEW: " .. tos(settings.filterApplied[locVars.gLastCraftingType][comingFrom]))
+--d(">>> NEW setting filterApplied: " .. tos(settings.filterApplied[locVars.gLastCraftingType][comingFrom]))
     --Get the appropriate inventory type
     if comingFrom == nil then return end
     --Check settings then
     local filterTag = lastCraftingType .. "_" .. comingFrom
     if settings.filterApplied[lastCraftingType][comingFrom] == FCOCF_SHOW_ALL then
-----d("Unregister filter")
+--d("Unregister filter")
         --Unregister the filter and show all items again
         FCOCraftFilter_UnregisterFilter(filterTag, comingFrom)
         --Refresh the inventory
         FCOCraftFilter_UpdateInventory(comingFrom)
     else
-----d("Register filter")
+--d("Register filter")
         --Register the filter and hide bank items
         FCOCraftFilter_RegisterFilter(filterTag, comingFrom, FCOCraftFilter_FilterCallbackFunction)
         --Refresh the inventory
@@ -2045,10 +2142,10 @@ end
 
 --Check if the retrait station is shown and add the button now
 local function FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton(craftSkill)
---d("FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton-craftSkill:" .. tos(craftSkill))
+d("FCOCraftFilter_CheckIfRetraitStationIsShownAndAddButton-craftSkill:" .. tos(craftSkill))
     if craftSkill == CRAFTING_TYPE_INVALID then
 
---d(">found retrait: " ..tos(libFilters:IsRetraitStationShown()))
+d(">found retrait: " ..tos(libFilters:IsRetraitStationShown()))
         if libFilters:IsRetraitStationShown() == true then
             updateRetraitButtons(craftSkill)
         else
@@ -2080,7 +2177,7 @@ local function FCOCraftFilter_OnOpenCrafting(eventCode, craftSkill, sameStation)
     if locVars.gLastCraftingType == CRAFTING_TYPE_INVALID then
         --and the last panel was the retrait station or an UniversalDeconstruction filterType
         if lastPanel == LF_RETRAIT or libFilters_IsUniversalDeconstructionSupportedFilterType(lastPanel) then
-            --d(">resetting filter for panel: " .. tos(lastPanel))
+            d(">RETRAIT: resetting filter for panel: " .. tos(lastPanel))
             FCOCraftFilter_UnregisterFilter(locVars.gLastCraftingType .. "_" .. lastPanel, lastPanel)
         end
     end
@@ -2129,7 +2226,7 @@ local function FCOCraftFilter_Player_Activated(...)
             filterPanelId       = LF_SMITHING_DECONSTRUCT,
             filterName          = "FCOCraftFilter_Deconstruction",
             callbackFunction    = function(slotData)
-                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
+                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex, LF_SMITHING_DECONSTRUCT)
             end,
         }
         AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
@@ -2144,7 +2241,7 @@ local function FCOCraftFilter_Player_Activated(...)
             filterPanelId       = LF_ENCHANTING_CREATION,
             filterName          = "FCOCraftFilter_Enchanting_Creation",
             callbackFunction    = function(slotData)
-                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
+                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex, LF_ENCHANTING_CREATION)
             end,
         }
         AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
@@ -2159,7 +2256,7 @@ local function FCOCraftFilter_Player_Activated(...)
             filterPanelId       = LF_JEWELRY_DECONSTRUCT,
             filterName          = "FCOCraftFilter_Jewelry_Deconstruction",
             callbackFunction    = function(slotData)
-                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
+                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex, LF_JEWELRY_DECONSTRUCT)
             end,
         }
         AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
@@ -2174,7 +2271,7 @@ local function FCOCraftFilter_Player_Activated(...)
             filterPanelId       = LF_RETRAIT,
             filterName          = "FCOCraftFilter_Retrait",
             callbackFunction    = function(slotData)
-                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex)
+                return FCOCraftFilter_FilterCallbackFunction(slotData.bagId, slotData.slotIndex, LF_RETRAIT)
             end,
         }
         AdvancedFilters_RegisterSubfilterbarRefreshFilter(subfilterRefreshFilterInformationTable)
@@ -2610,9 +2707,9 @@ d("Childless header was selected")
                 return false
             end
             settings = FCOCF.settingsVars.settings
-            local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
+            isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
             if not isSetFavoriteCategoriesEnabledInTotal then
-                d("<abort NOT ENABLED AT ALL")
+                --d("<abort NOT ENABLED AT ALL")
                 return false
             end
             --If this is a consolidated crafting station, make sure the active set matches the current selection
@@ -3121,6 +3218,9 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
         masterCrafterSetsFavoritesEnabled = {},
         masterCrafterSetsFavoritesNames = {},
         masterCrafterSetsFavorites = {},
+        enableOnlyWornFilters = false,
+        showWornItemsAtOnlyInventory = false,
+
     }
     for customFavoriteId, _ in pairs(customMasterCrafterSetStationFavoriteIds) do
         defaults.masterCrafterSetsFavorites[customFavoriteId] = {}
