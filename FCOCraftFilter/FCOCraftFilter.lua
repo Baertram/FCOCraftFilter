@@ -1636,7 +1636,7 @@ end
 local function FCOCraftFilter_RegisterFilter(filterName, libFiltersInventoryType, callbackFunction)
     if   libFilters == nil or filterName == nil or filterName == "" or libFiltersInventoryType == nil
       or callbackFunction == nil or type(callbackFunction) ~= "function" then return end
-d("[FCOCraftFilter_RegisterFilter] filterName: FCOCraftFilter_" .. filterName .. ", libFiltersInventoryType: " .. libFiltersInventoryType)
+--d("[FCOCraftFilter_RegisterFilter] filterName: FCOCraftFilter_" .. filterName .. ", libFiltersInventoryType: " .. libFiltersInventoryType)
     if(not libFilters:IsFilterRegistered("FCOCraftFilter_" .. tos(filterName))) then
         ----d("--> register now")
         libFilters:RegisterFilter("FCOCraftFilter_" .. tos(filterName), libFiltersInventoryType,
