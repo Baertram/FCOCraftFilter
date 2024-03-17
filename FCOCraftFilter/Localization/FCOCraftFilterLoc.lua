@@ -336,17 +336,45 @@ FCOCF.localizationVars.localizationAll = {
         ["options_savedVariables_dropdown_selection2"] = "Oбщиe нa aккaунт",
         --Options crafting stations
         ["options_header_crafting_stations"]     = "Ремесленная станция",
-        ["options_enable_medium_filter"]         = "Вкл. фильтр 'показ только из банка'",
-        ["options_enable_medium_filter_tooltip"] = "Включает третий фильтр который позволит вам показывать только предметы расположенные в вашем банке",
+        ["options_enable_medium_filter"]         = "Вкл. фильтр «только из банка»",
+        ["options_enable_medium_filter_tooltip"] = "Включает третий фильтр, который позволит вам видеть только предметы, расположенные в вашем банке",
+        ["options_enable_only_worn_filter"] =           "Вкл. фильтр «только экипир.»",
+        ["options_enable_only_worn_filter_TT"] =        "Включает дополнительный фильтр, показывающий только экипированные предметы, где это поддерживает стандартный интерфейс (напр. Трансмутация, Улучшение)",
+        ["options_show_only_worn_at_only_invetory"]  =  "Показ. экип. с инвентарём",
+        ["options_show_only_worn_at_only_invetory_TT"] ="Включает экипированные предметы при активном фильтре «только инвентарь», где это поддерживает стандартный интерфейс (напр. Трансмутация, Улучшение)",
+
+        ["options_header_research"] = GetString(SI_SMITHING_TAB_RESEARCH),
+        ["options_enable_button_only_currently_researched"] = "Показ. кнопку «исследуемые сейчас»",
+        ["options_enable_button_only_currently_researched_tooltip"] = "Показывает на панели исследования ремесленных станций кнопку, переключающую между фильтрами «исследуемые сейчас» и «все подлежащие» предметы",
+        ["button_FCO_show_all_researched_tooltip"] = "Текущий: Показать все подлежащие исследованию предметы",
+        ["button_FCO_currently_show_only_researched_tooltip"] = "Текущий: Показать исследуемые сейчас предметы",
+
+        ["options_header_defaultCraftTab"] = "Вкладка станции по умолчанию",
+        ["options_defaultCraftTab_enable"] = "Переназн. стандартную вкладку",
+        ["options_defaultCraftTab_enable_TT"] = "Переназначает вкладку, которая откроется при взаимодействии с ремесленной станцией, на выбранную вами.",
+
+        ["options_header_grandmaster_crafting"] = "Ремесленные станции великого мастера",
+        ["options_multisets_create_enable_favorites"] = "Вкл. избранное на станциях ВМ",
+        ["options_multisets_create_fav_tooltip"] = "Название избранной категории, которое будет показано на ремесленных станциях великого мастера",
+        ["options_multisets_create_enable_favorite"] = "Вкл. избранную категорию",
+        ["options_multisets_create_enable_favorite_TT"] = "Показывать эту избранную категорию на ремесленных станциях великого мастера",
+
         --Chat commands
         ["chatcommands_info"]                    = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
         --Buttons
         ["button_FCO_hide_bank_tooltip"]         = "Следующий: Скрыть предметы из банка",
         ["button_FCO_show_all_tooltip"]         = "Следующий: Показать все предметы",
         ["button_FCO_show_only_bank_tooltip"]    = "Следующий: Показать предметы только из банка",
+        ["button_FCO_show_only_worn_tooltip"]    = "Следующий: Показать только экипированные предметы",
         ["button_FCO_currently_hide_bank_tooltip"]       = "Текущий: Предметы из банка скрыты",
         ["button_FCO_currently_show_all_tooltip"]       = "Текущий: Показаны все предметы",
         ["button_FCO_currently_show_only_bank_tooltip"]  = "Текущий: Показаны предметы только из банка",
+        ["button_FCO_currently_show_only_worn_tooltip"]    = "Текущий: Показаны только экипированные предметы",
+
+        ["button_FCO_hide_craftbag_tooltip"]         = "Следующий: Скрыть предметы из Ремесленной сумки",
+        ["button_FCO_show_only_craftbag_tooltip"]    = "Следующий: Показать предметы только из Ремесленной сумки",
+        ["button_FCO_currently_hide_craftbag_tooltip"]         = "Текущий: Предметы из Ремесленной сумки скрыты",
+        ["button_FCO_currently_show_only_craftbag_tooltip"]    = "Текущий: Показаны предметы только из Ремесленной сумки",
     },
 }
 --Meta table trick to use english localization for german and french values, which are missing
