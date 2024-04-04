@@ -1,3 +1,35 @@
+--20240404 ApoAlaia in ESUI comments:
+--While doing Master crafter table writs via WritWorthy -> FCOCraftFilter enabled (set favorites off)
+--[[
+/EsoUI/Libraries/ZO_Tree/ZO_Tree.lua:394: attempt to index a nil value
+
+function ZO_Tree:SelectNode(treeNode, reselectingDuringRebuild, bringParentIntoView)
+    --Default to bringing the immediate parent of this node into view
+    if bringParentIntoView == nil then
+        bringParentIntoView = true
+    end
+
+    --Can only select leaf nodes
+--> ERROR HERE (treeNode is nil?):       if treeNode:IsLeaf() and treeNode:IsEnabled() then
+
+stack traceback:
+/EsoUI/Libraries/ZO_Tree/ZO_Tree.lua:394: in function 'ZO_Tree:SelectNode'
+<Locals> self = [table:1]{enabled = T, width = 300, suspendAnimations = T, defaultIndent = 60, autoSelectChildOnNodeOpen = F, exclusive = T, defaultSpacing = -10}, bringParentIntoView = T </Locals>
+user:/AddOns/LibLazyCrafting/Smithing.lua:854: in function 'setCorrectSetIndex_ConsolidatedStation'
+
+-> ERROR here: The node SMITHING.setNodeLookupData[setIndex] is nil
+-> SMITHING.categoryTree:SelectNode( SMITHING.setNodeLookupData[setIndex])
+
+<Locals> setIndex = 610 </Locals>
+user:/AddOns/LibLazyCrafting/Smithing.lua:893: in function 'LLC_SmithingCraftInteraction'
+<Locals> station = 7, earliest = [table:2]{timestamp = 8, quality = 4, Requester = "WritWorthy", setIndex = 610, smithingQuantity = 1, reference = "4616874197188298559", materialQuantity = 15, pattern = 1, autocraft = T, trait = 32, materialIndex = 40, station = 7, useUniversalStyleItem = F, type = "smithing"}, addon = "WritWorthy", position = 1, earliest = [table:2], addon = "WritWorthy", position = 1, parameters = [table:3]{1 = 1} </Locals>
+user:/AddOns/LibLazyCrafting/LibLazyCrafting.lua:756: in function 'CraftEarliest'
+<Locals> event = 131543, station = 7, stationInteractionTable = [table:4]{station = 7}, earliest = [table:2], addon = "WritWorthy", position = 1 </Locals>
+user:/AddOns/LibLazyCrafting/LibLazyCrafting.lua:768: in function 'CraftInteract'
+<Locals> event = 131543, station = 7, k = 7, v = [table:4] </Locals>
+]]
+
+
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 --FCOCraftFilter.lua
@@ -18,7 +50,6 @@ local libFilters_GetCtrl
 local libFilters_IsUniversalDeconstructionSupportedFilterType
 local libFilters_IsUniversalDeconstructionPanelShown
 local libFilters_getUniversalDeconstructionPanelActiveTabFilterType
-local LAM
 local LCM
 
 local tos = tostring
@@ -42,7 +73,7 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.51 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.6.4' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptions 		= '0.6.7' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -236,29 +267,31 @@ local woodworkingRecipeDescriptor = _G["SI_RECIPECRAFTINGSYSTEM" .. GetTradeskil
 local jewelryRecipeDescriptor = _G["SI_RECIPECRAFTINGSYSTEM" .. GetTradeskillRecipeCraftingSystem(CRAFTING_TYPE_JEWELRYCRAFTING)]
 
 --local smithingCraftingTabEntries = {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(SI_ITEMTYPE29)}
-local smithingCraftingTabEntriesValues = {SMITHING_MODE_REFINEMENT, SMITHING_MODE_CREATION, SMITHING_MODE_DECONSTRUCTION, SMITHING_MODE_IMPROVEMENT, SMITHING_MODE_RESEARCH, SMITHING_MODE_RECIPES}
+local smithingCraftingTabEntriesValues = {-1, SMITHING_MODE_REFINEMENT, SMITHING_MODE_CREATION, SMITHING_MODE_DECONSTRUCTION, SMITHING_MODE_IMPROVEMENT, SMITHING_MODE_RESEARCH, SMITHING_MODE_RECIPES}
 local possibleCraftingTypeTabDropdownEntries       = {
-    [CRAFTING_TYPE_ALCHEMY] =           {GetString(SI_ALCHEMY_CREATION), GetString(alchemyRecipeDescriptor)},
-    [CRAFTING_TYPE_BLACKSMITHING] =     {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(blacksmithRecipeDescriptor)},
-    [CRAFTING_TYPE_CLOTHIER] =          {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(clothierRecipeDescriptor)},
-    [CRAFTING_TYPE_ENCHANTING] =        {GetString(SI_ENCHANTING_CREATION), GetString(SI_ENCHANTING_EXTRACTION), GetString(enchantingRecipeDescriptor)},
-    [CRAFTING_TYPE_JEWELRYCRAFTING] =   {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(jewelryRecipeDescriptor)},
-    [CRAFTING_TYPE_PROVISIONING] =      {GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_FILLET), GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_SPICES), GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_FLAVORING), GetString(proivisioningRecipeDescriptor)}, --GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_FURNISHING)},
-    [CRAFTING_TYPE_WOODWORKING] =       {GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(woodworkingRecipeDescriptor)},
-    ["retrait"]                 =       {GetString(SI_RETRAIT_STATION_RETRAIT_MODE), GetString(SI_RETRAIT_STATION_RECONSTRUCT_MODE)},
-    ["universalDeconstruction"] =       {}
+    [CRAFTING_TYPE_ALCHEMY] =           {GetString(SI_CHECK_BUTTON_DISABLED), GetString(SI_ALCHEMY_CREATION), GetString(alchemyRecipeDescriptor)},
+    [CRAFTING_TYPE_BLACKSMITHING] =     {GetString(SI_CHECK_BUTTON_DISABLED), GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(blacksmithRecipeDescriptor)},
+    [CRAFTING_TYPE_CLOTHIER] =          {GetString(SI_CHECK_BUTTON_DISABLED), GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(clothierRecipeDescriptor)},
+    [CRAFTING_TYPE_ENCHANTING] =        {GetString(SI_CHECK_BUTTON_DISABLED), GetString(SI_ENCHANTING_CREATION), GetString(SI_ENCHANTING_EXTRACTION), GetString(enchantingRecipeDescriptor)},
+    [CRAFTING_TYPE_JEWELRYCRAFTING] =   {GetString(SI_CHECK_BUTTON_DISABLED), GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(jewelryRecipeDescriptor)},
+    [CRAFTING_TYPE_PROVISIONING] =      {GetString(SI_CHECK_BUTTON_DISABLED), GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_FILLET), GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_SPICES), GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_FLAVORING), GetString(proivisioningRecipeDescriptor)}, --GetString("SI_PROVISIONERSPECIALINGREDIENTTYPE", PROVISIONER_SPECIAL_INGREDIENT_TYPE_FURNISHING)},
+    [CRAFTING_TYPE_WOODWORKING] =       {GetString(SI_CHECK_BUTTON_DISABLED), GetString(SI_SMITHING_TAB_REFINEMENT), GetString(SI_SMITHING_TAB_CREATION), GetString(SI_SMITHING_TAB_DECONSTRUCTION), GetString(SI_SMITHING_TAB_IMPROVEMENT), GetString(SI_SMITHING_TAB_RESEARCH), GetString(woodworkingRecipeDescriptor)},
+    ["retrait"]                 =       {GetString(SI_CHECK_BUTTON_DISABLED), GetString(SI_RETRAIT_STATION_RETRAIT_MODE), GetString(SI_RETRAIT_STATION_RECONSTRUCT_MODE)},
+    ["universalDeconstruction"] =       {GetString(SI_CHECK_BUTTON_DISABLED)}
 }
 local possibleCraftingTypeTabDropdownEntriesValues = {
-    [CRAFTING_TYPE_ALCHEMY] =           {ZO_ALCHEMY_MODE_CREATION, ZO_ALCHEMY_MODE_RECIPES},
+    [CRAFTING_TYPE_ALCHEMY] =           {-1, ZO_ALCHEMY_MODE_CREATION, ZO_ALCHEMY_MODE_RECIPES},
     [CRAFTING_TYPE_BLACKSMITHING] =     smithingCraftingTabEntriesValues,
     [CRAFTING_TYPE_CLOTHIER] =          smithingCraftingTabEntriesValues,
-    [CRAFTING_TYPE_ENCHANTING] =        {ENCHANTING_MODE_CREATION, ENCHANTING_MODE_EXTRACTION, ENCHANTING_MODE_RECIPES},
+    [CRAFTING_TYPE_ENCHANTING] =        {-1, ENCHANTING_MODE_CREATION, ENCHANTING_MODE_EXTRACTION, ENCHANTING_MODE_RECIPES},
     [CRAFTING_TYPE_JEWELRYCRAFTING] =   smithingCraftingTabEntriesValues,
-    [CRAFTING_TYPE_PROVISIONING] =      {PROVISIONER_SPECIAL_INGREDIENT_TYPE_FILLET, PROVISIONER_SPECIAL_INGREDIENT_TYPE_SPICES, PROVISIONER_SPECIAL_INGREDIENT_TYPE_FLAVORING, PROVISIONER_SPECIAL_INGREDIENT_TYPE_FURNISHING},
+    [CRAFTING_TYPE_PROVISIONING] =      {-1, PROVISIONER_SPECIAL_INGREDIENT_TYPE_FILLET, PROVISIONER_SPECIAL_INGREDIENT_TYPE_SPICES, PROVISIONER_SPECIAL_INGREDIENT_TYPE_FLAVORING, PROVISIONER_SPECIAL_INGREDIENT_TYPE_FURNISHING},
     [CRAFTING_TYPE_WOODWORKING] =       smithingCraftingTabEntriesValues,
-    ["retrait"]                 =       {"retraitTab", "reconstructTab"},--{ZO_RETRAIT_MODE_RETRAIT, ZO_RETRAIT_MODE_RECONSTRUCT},
-    ["universalDeconstruction"] =       {}
+    ["retrait"]                 =       {-1, "retraitTab", "reconstructTab"},--{ZO_RETRAIT_MODE_RETRAIT, ZO_RETRAIT_MODE_RECONSTRUCT},
+    ["universalDeconstruction"] =       {-1}
 }
+FCOCF.possibleCraftingTypeTabDropdownEntries = possibleCraftingTypeTabDropdownEntries
+FCOCF.possibleCraftingTypeTabDropdownEntriesValues = possibleCraftingTypeTabDropdownEntriesValues
 
 local tabButtonBarsByCraftingType = {
     [CRAFTING_TYPE_ALCHEMY] =           alch.modeBar,
@@ -400,6 +433,11 @@ local customMasterCrafterSetStationFavoriteIdToTexture = {
     [FAVORITES_MAG_DD_CATEGORY_ID] = defaultFavIconCategoryTexturs,
     [FAVORITES_HYBRID_DD_CATEGORY_ID] = defaultFavIconCategoryTexturs,
 }
+FCOCF.customMasterCrafterSetStationFavoriteIds = customMasterCrafterSetStationFavoriteIds
+FCOCF.customMasterCrafterSetStationFavoriteIdToNameDefaults = customMasterCrafterSetStationFavoriteIdToNameDefaults
+FCOCF.customMasterCrafterSetStationFavoriteIdToName = customMasterCrafterSetStationFavoriteIdToName
+FCOCF.customMasterCrafterSetStationNameToFavoriteId = customMasterCrafterSetStationNameToFavoriteId
+FCOCF.customMasterCrafterSetStationFavoriteIdToTexture = customMasterCrafterSetStationFavoriteIdToTexture
 
 
 --===================== CLASSES ==============================================
@@ -432,6 +470,7 @@ local function getCustomSetFavoriteCategoryName(customFavoriteCategoryId)
     local masterCrafterSetsFavoritesNames = FCOCF.settingsVars.settings.masterCrafterSetsFavoritesNames
     return masterCrafterSetsFavoritesNames[customFavoriteCategoryId] or customMasterCrafterSetStationFavoriteIdToNameDefaults[customFavoriteCategoryId] or ""
 end
+FCOCF.GetCustomSetFavoriteCategoryName = getCustomSetFavoriteCategoryName
 
 local masterCrafterSetFavoritesClearDialogInitialized = false
 local function initializeClearMasterCrafterSetFavoritesDialog()
@@ -611,6 +650,22 @@ local function buildFavoriteSetsDataAndAddToFavoritesCategory()
     end
 end
 
+local function buildCustomSetFavoriteCategoryNames()
+    local localizationVars = FCOCF.localizationVars.FCOCF_loc
+    customMasterCrafterSetStationFavoriteIdToNameDefaults = {}
+    customMasterCrafterSetStationFavoriteIdToName = {}
+    customMasterCrafterSetStationNameToFavoriteId = {}
+
+    for customMasterCrafterSetStationFavoriteId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do
+        local defName = localizationVars["options_multisets_create_fav_" .. tostring(customMasterCrafterSetStationFavoriteId)]
+        customMasterCrafterSetStationFavoriteIdToNameDefaults[customMasterCrafterSetStationFavoriteId] = defName
+        local name = getCustomSetFavoriteCategoryName(customMasterCrafterSetStationFavoriteId)
+        customMasterCrafterSetStationFavoriteIdToName[customMasterCrafterSetStationFavoriteId] = name
+        customMasterCrafterSetStationNameToFavoriteId[name] = customMasterCrafterSetStationFavoriteId
+    end
+end
+FCOCF.BuildCustomSetFavoriteCategoryNames = buildCustomSetFavoriteCategoryNames
+
 --===================== FUNCTIONS ==============================================
 
 local function getCraftingTabButtonBar(craftingType)
@@ -623,6 +678,8 @@ end
 
 local function setRetraitTabButtonTo(newRetraitTab)
     --d("[FCOCF]setRetraitTabButtonTo-newRetraitTab:" .. tos(newRetraitTab))
+    if newRetraitTab == -1 then return end
+
     local tabButtonBar
     tabButtonBar = getCraftingTabButtonBar("retrait")
 --d(">tabButtonBar: " .. tos(tabButtonBar))
@@ -636,7 +693,10 @@ end
 
 local function setCraftingTabButtonTo(craftingTypeOrUniversalDeconKey, isUniversalDecon, descriptorOrNewUniversalDeconKey, currentUniversalDeconTab)
     isUniversalDecon = isUniversalDecon or false
---d("[FCOCF]setCraftingTabButtonTo-craftSkill:" .. tos(craftingTypeOrUniversalDeconKey) .. ", isUniversalDecon: " ..tos(isUniversalDecon) .. ", newDescriptor: " .. tos(descriptorOrNewUniversalDeconKey))
+    --d("[FCOCF]setCraftingTabButtonTo-craftSkill:" .. tos(craftingTypeOrUniversalDeconKey) .. ", isUniversalDecon: " ..tos(isUniversalDecon) .. ", newDescriptor: " .. tos(descriptorOrNewUniversalDeconKey))
+    --Disabled at the crafting type? Do not changem use ESO default behavor
+    if descriptorOrNewUniversalDeconKey == -1 then return end
+
     local newTabDescriptor, tabButtonBar
     if isUniversalDecon == true then
         --Get the current UniversalDecon selected tab
@@ -646,10 +706,10 @@ local function setCraftingTabButtonTo(craftingTypeOrUniversalDeconKey, isUnivers
         elseif currentUniversalDeconTab.key ~= nil then
             currentUniversalDeconTab = currentUniversalDeconTab.key
         end
---d(">currentUniversalDeconKey: " .. tos(currentUniversalDeconTab))
+        --d(">currentUniversalDeconKey: " .. tos(currentUniversalDeconTab))
         --Change tab it, if needed
         if descriptorOrNewUniversalDeconKey == currentUniversalDeconTab then
---d("<[ABORT]universalDecon tab already active!")
+            --d("<[ABORT]universalDecon tab already active!")
             return false
         end
 
@@ -661,15 +721,15 @@ local function setCraftingTabButtonTo(craftingTypeOrUniversalDeconKey, isUnivers
         newTabDescriptor = descriptorOrNewUniversalDeconKey
         tabButtonBar = getCraftingTabButtonBar(craftingTypeOrUniversalDeconKey)
     end
---d(">tabButtonBar: " .. tos(tabButtonBar) .. ", newTabDescriptor: " .. tos(newTabDescriptor))
+    --d(">tabButtonBar: " .. tos(tabButtonBar) .. ", newTabDescriptor: " .. tos(newTabDescriptor))
     if tabButtonBar ~= nil and ((not isUniversalDecon and newTabDescriptor ~= nil) or isUniversalDecon) then
         --Get the currently selected descriptor
         if ZO_MenuBar_GetSelectedDescriptor(tabButtonBar) == newTabDescriptor then
---d("<[ABORT]descriptor already active!")
+            --d("<[ABORT]descriptor already active!")
             return false
         end
         --And change it, if it differs
---d(">>Setting descriptor to: " ..tos(newTabDescriptor))
+        --d(">>Setting descriptor to: " ..tos(newTabDescriptor))
         ZO_MenuBar_SelectDescriptor(tabButtonBar, newTabDescriptor, true, false)
         return true
     end
@@ -1022,379 +1082,6 @@ local function toggleCurrentlyResearchedItemsFilter()
 end
 --FCOCF.ToggleCurrentlyResearchedItemsFilter = toggleCurrentlyResearchedItemsFilter
 
-local function buildCustomSetFavoriteCategoryNames()
-    local localizationVars = FCOCF.localizationVars.FCOCF_loc
-    customMasterCrafterSetStationFavoriteIdToNameDefaults = {}
-    customMasterCrafterSetStationFavoriteIdToName = {}
-    customMasterCrafterSetStationNameToFavoriteId = {}
-
-    for customMasterCrafterSetStationFavoriteId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do
-        local defName = localizationVars["options_multisets_create_fav_" .. tostring(customMasterCrafterSetStationFavoriteId)]
-        customMasterCrafterSetStationFavoriteIdToNameDefaults[customMasterCrafterSetStationFavoriteId] = defName
-        local name = getCustomSetFavoriteCategoryName(customMasterCrafterSetStationFavoriteId)
-        customMasterCrafterSetStationFavoriteIdToName[customMasterCrafterSetStationFavoriteId] = name
-        customMasterCrafterSetStationNameToFavoriteId[name] = customMasterCrafterSetStationFavoriteId
-    end
-end
-
--- Build the options menu
-local function BuildAddonMenu()
-    local addonVars = FCOCF.addonVars
-    local settings = FCOCF.settingsVars.settings
-    local defaults = FCOCF.settingsVars.defaults
-    local localizationVars = FCOCF.localizationVars.FCOCF_loc
-
-    local panelData = {
-        type 				= 'panel',
-        name 				= addonVars.addonNameMenu,
-        displayName 		= addonVars.addonNameMenuDisplay,
-        author 				= addonVars.addonAuthor,
-        version 			= addonVars.addonVersionOptions,
-        website             = addonVars.addonWebsite,
-        registerForRefresh 	= true,
-        registerForDefaults = true,
-        slashCommand = "/fcocfs",
-    }
-
--- !!! RU Patch Section START
---  Add english language description behind language descriptions in other languages
-	local function nvl(val) if val == nil then return "..." end return val end
-	local LV_Cur = localizationVars
-	local LV_Eng = FCOCF.localizationVars.localizationAll[1]
-	local languageOptions = {}
-	for i=1, FCOCF.numVars.languageCount do
-		local s="options_language_dropdown_selection"..i
-		if LV_Cur==LV_Eng then
-			languageOptions[i] = nvl(LV_Cur[s])
-		else
-			languageOptions[i] = nvl(LV_Cur[s]) .. " (" .. nvl(LV_Eng[s]) .. ")"
-		end
-	end
--- !!! RU Patch Section END
-
-    buildCustomSetFavoriteCategoryNames()
-
-    local savedVariablesOptions = {
-        [1] = localizationVars["options_savedVariables_dropdown_selection1"],
-        [2] = localizationVars["options_savedVariables_dropdown_selection2"],
-    }
-
-
-
-    --The LAM settings panel
-    FCOCF.LAMSettingsPanel = LAM:RegisterAddonPanel(addonVars.gAddonName .. "_LAMPanel", panelData)
-
-    local optionsTable =
-    {	-- BEGIN OF OPTIONS TABLE
-
-        {
-            type = 'description',
-            text = localizationVars["options_description"],
-        },
-
-        --==============================================================================
-        {
-            type = 'header',
-            name = localizationVars["options_header1"],
-        },
-        {
-            type = 'dropdown',
-            name = localizationVars["options_language"],
-            tooltip = localizationVars["options_language_tooltip"],
-            choices = languageOptions,
-            getFunc = function() return languageOptions[FCOCF.settingsVars.defaultSettings.language] end,
-            setFunc = function(value)
-                for i,v in pairs(languageOptions) do
-                    if v == value then
-                        FCOCF.settingsVars.defaultSettings.language = i
-                        --Tell the settings that you have manually chosen the language and want to keep it
-                        --Read in function Localization() after ReloadUI()
-                        settings.languageChoosen = true
-                        --localizationVars			  	 = localizationVars[i]
-                        --ReloadUI()
-                    end
-                end
-            end,
-           disabled = function() return settings.alwaysUseClientLanguage end,
-           warning = localizationVars["options_language_description1"],
-           requiresReload = true,
-        },
-		{
-			type = "checkbox",
-			name = localizationVars["options_language_use_client"],
-			tooltip = localizationVars["options_language_use_client_tooltip"],
-			getFunc = function() return settings.alwaysUseClientLanguage end,
-			setFunc = function(value)
-				settings.alwaysUseClientLanguage = value
-                      --ReloadUI()
-		            end,
-            default = defaults.alwaysUseClientLanguage,
-            warning = localizationVars["options_language_description1"],
-            requiresReload = true,
-		},
-        {
-            type = 'dropdown',
-            name = localizationVars["options_savedvariables"],
-            tooltip = localizationVars["options_savedvariables_tooltip"],
-            choices = savedVariablesOptions,
-            getFunc = function() return savedVariablesOptions[FCOCF.settingsVars.defaultSettings.saveMode] end,
-            setFunc = function(value)
-                for i,v in pairs(savedVariablesOptions) do
-                    if v == value then
-                        FCOCF.settingsVars.defaultSettings.saveMode = i
-                        ReloadUI()
-                    end
-                end
-            end,
-            warning = localizationVars["options_language_description1"],
-        },
-        --==============================================================================
-        {
-            type = 'header',
-            name = localizationVars["options_header_crafting_stations"],
-        },
-        {
-            type = "checkbox",
-            name = localizationVars["options_enable_medium_filter"],
-            tooltip = localizationVars["options_enable_medium_filter_tooltip"],
-            getFunc = function() return settings.enableMediumFilters end,
-            setFunc = function(value) settings.enableMediumFilters = value
-            end,
-            default = defaults.enableMediumFilters,
-            width="full",
-        },
-        {
-            type = "checkbox",
-            name = localizationVars["options_enable_only_worn_filter"],
-            tooltip = localizationVars["options_enable_only_worn_filter_TT"],
-            getFunc = function() return settings.enableOnlyWornFilters end,
-            setFunc = function(value) settings.enableOnlyWornFilters = value
-            end,
-            default = defaults.enableOnlyWornFilters,
-            width="full",
-        },
-        {
-            type = "checkbox",
-            name = localizationVars["options_show_only_worn_at_only_invetory"],
-            tooltip = localizationVars["options_show_only_worn_at_only_invetory_TT"],
-            getFunc = function() return settings.showWornItemsAtOnlyInventory end,
-            setFunc = function(value) settings.showWornItemsAtOnlyInventory = value
-            end,
-            default = defaults.showWornItemsAtOnlyInventory,
-            width="full",
-        },
-        {
-            type = 'header',
-            name = localizationVars["options_header_research"],
-        },
-        {
-            type = "checkbox",
-            name = localizationVars["options_enable_button_only_currently_researched"],
-            tooltip = localizationVars["options_enable_button_only_currently_researched_tooltip"],
-            getFunc = function() return settings.showButtonResearchOnlyCurrentlyResearched end,
-            setFunc = function(value) settings.showButtonResearchOnlyCurrentlyResearched = value
-            end,
-            default = defaults.showButtonResearchOnlyCurrentlyResearched,
-            width="full",
-        },
-        {
-            type = 'header',
-            name = localizationVars["options_header_defaultCraftTab"],
-        },
-        {
-            type = "checkbox",
-            name = localizationVars["options_defaultCraftTab_enable"],
-            tooltip = localizationVars["options_defaultCraftTab_enable_TT"],
-            getFunc = function() return settings.defaultCraftTabDescriptorEnabled end,
-            setFunc = function(value) settings.defaultCraftTabDescriptorEnabled = value
-            end,
-            default = defaults.defaultCraftTabDescriptorEnabled,
-            width="full",
-        },
-        {
-            type = "dropdown",
-            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_ALCHEMY]),
-            --tooltip = GetString(),
-            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_ALCHEMY],
-            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_ALCHEMY],
-            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_ALCHEMY] end,
-            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_ALCHEMY] = value
-            end,
-            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_ALCHEMY],
-            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
-            width="full",
-        },
-        {
-            type = "dropdown",
-            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_PROVISIONING]),
-            --tooltip = GetString(),
-            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_PROVISIONING],
-            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_PROVISIONING],
-            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_PROVISIONING] end,
-            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_PROVISIONING] = value
-            end,
-            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_PROVISIONING],
-            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
-            width="full",
-        },
-        {
-            type = "dropdown",
-            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_ENCHANTING]),
-            --tooltip = GetString(),
-            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_ENCHANTING],
-            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_ENCHANTING],
-            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_ENCHANTING] end,
-            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_ENCHANTING] = value
-            end,
-            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_ENCHANTING],
-            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
-            width="full",
-        },
-        {
-            type = "dropdown",
-            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_BLACKSMITHING]),
-            --tooltip = GetString(),
-            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_BLACKSMITHING],
-            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_BLACKSMITHING],
-            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_BLACKSMITHING] end,
-            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_BLACKSMITHING] = value
-            end,
-            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_BLACKSMITHING],
-            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
-            width="full",
-        },
-        {
-            type = "dropdown",
-            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_CLOTHIER]),
-            --tooltip = GetString(),
-            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_CLOTHIER],
-            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_CLOTHIER],
-            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_CLOTHIER] end,
-            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_CLOTHIER] = value
-            end,
-            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_CLOTHIER],
-            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
-            width="full",
-        },
-        {
-            type = "dropdown",
-            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_WOODWORKING]),
-            --tooltip = GetString(),
-            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_WOODWORKING],
-            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_WOODWORKING],
-            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_WOODWORKING] end,
-            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_WOODWORKING] = value
-            end,
-            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_WOODWORKING],
-            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
-            width="full",
-        },
-        {
-            type = "dropdown",
-            name = GetString(_G["SI_TRADESKILLTYPE" .. CRAFTING_TYPE_JEWELRYCRAFTING]),
-            --tooltip = GetString(),
-            choices = possibleCraftingTypeTabDropdownEntries[CRAFTING_TYPE_JEWELRYCRAFTING],
-            choicesValues = possibleCraftingTypeTabDropdownEntriesValues[CRAFTING_TYPE_JEWELRYCRAFTING],
-            getFunc = function() return settings.defaultCraftTabDescriptor[CRAFTING_TYPE_JEWELRYCRAFTING] end,
-            setFunc = function(value) settings.defaultCraftTabDescriptor[CRAFTING_TYPE_JEWELRYCRAFTING] = value
-            end,
-            default = defaults.defaultCraftTabDescriptor[CRAFTING_TYPE_JEWELRYCRAFTING],
-            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
-            width="full",
-        },
-        {
-            type = "dropdown",
-            name = GetString(SI_RETRAIT_STATION_HEADER),
-            --tooltip = GetString(),
-            choices = possibleCraftingTypeTabDropdownEntries["retrait"],
-            choicesValues = possibleCraftingTypeTabDropdownEntriesValues["retrait"],
-            getFunc = function() return settings.defaultCraftTabDescriptor["retrait"] end,
-            setFunc = function(value) settings.defaultCraftTabDescriptor["retrait"] = value
-                --[[
-                retraitStationTabs = retraitStationTabs or retraitStation.tabs
-                if retraitStationTabs ~= nil then
-                    retraitStationTabs:SetStartingFragment(retraitStation[value].categoryName)
-                end
-                ]]
-            end,
-            default = defaults.defaultCraftTabDescriptor["retrait"],
-            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
-            width="full",
-        },
-        {
-            type = "dropdown",
-            name = "Universal Deconstruction",
-            --tooltip = GetString(),
-            choices = possibleCraftingTypeTabDropdownEntries["universalDeconstruction"],
-            choicesValues = possibleCraftingTypeTabDropdownEntriesValues["universalDeconstruction"],
-            getFunc = function() return settings.defaultCraftTabDescriptor["universalDeconstruction"] end,
-            setFunc = function(value) settings.defaultCraftTabDescriptor["universalDeconstruction"] = value
-            end,
-            default = defaults.defaultCraftTabDescriptor["universalDeconstruction"],
-            disabled = function() return not settings.defaultCraftTabDescriptorEnabled end,
-            width="full",
-        },
-        --==============================================================================
-        {
-            type = 'header',
-            name = localizationVars["options_header_grandmaster_crafting"],
-        },
-        {
-            type = "checkbox",
-            name = localizationVars["options_multisets_create_enable_favorites"],
-            tooltip = localizationVars["options_multisets_create_enable_favorites"],
-            getFunc = function() return settings.enableMasterCrafterSetsFavorites end,
-            setFunc = function(value) settings.enableMasterCrafterSetsFavorites = value
-            end,
-            default = defaults.enableMasterCrafterSetsFavorites,
-            width="full",
-            requiresReload = true,
-        },
-    }
-    --Custom Grand Master crafting stations set craete favorite categories, sorted by name
-    local sortedCustomMasterCrafterSetStationFavoriteIds = {}
-    for customFavoriteCategoryId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do
-        if isEnabled == true then
-            table.insert(sortedCustomMasterCrafterSetStationFavoriteIds, getCustomSetFavoriteCategoryName(customFavoriteCategoryId))
-        end
-    end
-    if not ZO_IsTableEmpty(sortedCustomMasterCrafterSetStationFavoriteIds) then
-        table.sort(sortedCustomMasterCrafterSetStationFavoriteIds)
---d(">sorted names of custom category IDs")
-        for favCounter, name in ipairs(sortedCustomMasterCrafterSetStationFavoriteIds) do
-            local customFavoriteCategoryId = customMasterCrafterSetStationNameToFavoriteId[name]
---d(">name: " ..tos(name) .. "; ID: " ..tos(customFavoriteCategoryId))
-            if customFavoriteCategoryId ~= nil then
-                optionsTable[#optionsTable + 1] = {
-                    type = "checkbox",
-                    name = localizationVars["options_multisets_create_enable_favorite"],
-                    tooltip = localizationVars["options_multisets_create_enable_favorite_TT"],
-                    getFunc = function() return settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId] end,
-                    setFunc = function(value) settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId] = value
-                    end,
-                    default = defaults.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId],
-                    disabled = function() return not settings.enableMasterCrafterSetsFavorites end,
-                    width="half",
-                }
-                optionsTable[#optionsTable + 1] = {
-                    type = "editbox",
-                    name = GetString(SI_COLLECTIONS_FAVORITES_CATEGORY_HEADER) .. "#" .. tos(favCounter),
-                    tooltip = GetString(SI_COLLECTIONS_FAVORITES_CATEGORY_HEADER) .. "#" .. tos(favCounter),
-                    getFunc = function() return getCustomSetFavoriteCategoryName(customFavoriteCategoryId) end,
-                    setFunc = function(value) settings.masterCrafterSetsFavoritesNames[customFavoriteCategoryId] = value
-                    end,
-                    default = customMasterCrafterSetStationFavoriteIdToName[customFavoriteCategoryId],
-                    disabled = function() return not settings.enableMasterCrafterSetsFavorites or not settings.masterCrafterSetsFavoritesEnabled[customFavoriteCategoryId] end,
-                    width="half",
-                }
-            end
-        end
-    end
-
-    -- END OF OPTIONS TABLE
-    LAM:RegisterOptionControls(addonVars.gAddonName .. "_LAMPanel", optionsTable)
-
-end
 
 local function Localization()
 ----d("[FCOCF] Localization - Start, useClientLang: " .. tos(FCOCF.settingsVars.settings.alwaysUseClientLanguage))
@@ -1483,7 +1170,7 @@ local function reanchorResearchControls()
     local timerIcon = zoVars.CRAFTSTATION_SMITHING_RESEARCH_TIMER_ICON
     if numResearchingLabel then
         numResearchingLabel:ClearAnchors()
-        numResearchingLabel:SetAnchor(TOPLEFT, NIL, NIL, 75, 18)
+        numResearchingLabel:SetAnchor(TOPLEFT, nil, nil, 75, 18)
     end
     if timerIcon then
         timerIcon:ClearAnchors()
@@ -2293,7 +1980,7 @@ local function FCOCraftFilter_Player_Activated(...)
         --Retrait
         subfilterRefreshFilterInformationTable = {
             inventoryType       = {INVENTORY_BACKPACK, INVENTORY_BANK},
-            craftingType        = {CRAFTING_TYPE_NONE},
+            craftingType        = {CRAFTING_TYPE_INVALID},
             filterPanelId       = LF_RETRAIT,
             filterName          = "FCOCraftFilter_Retrait",
             callbackFunction    = function(slotData)
@@ -2672,17 +2359,21 @@ d("Childless header was selected")
         end)
         ]]
 
-        local origSmithingRefreshSetCategories = smith.RefreshSetCategories
+        --local origSmithingRefreshSetCategories = smith.RefreshSetCategories
+
         function smith.RefreshSetCategories()
+        --function zo_smith:RefreshSetCategories()
     --d("[FCOCS]SMITHING:RefreshSetCategories")
             local self = smith
             self.categoryTree:Reset()
             ZO_ClearTable(self.setNodeLookupData)
 
             if self.mode == SMITHING_MODE_CREATION and ZO_Smithing_IsConsolidatedStationCraftingMode() then
-                if isAnyMasterCrafterStationSetUnlocked() == false then return end
+                --Maybe created bug with LibLazyCrafting as self.setNodeLookupData was cleared and LLC tried to access it!
+                --if isAnyMasterCrafterStationSetUnlocked() == false then return end
                 self.setContainer:SetHidden(false)
 
+                ---v- FCOCraftFilter inserted code -v-
                 --Add the special set favorites category first
                 rebuildEnabledSmithingCreateMasterCrafterCustomFavoriteCategories()
                 buildFavoriteSetsDataAndAddToFavoritesCategory()
@@ -2699,6 +2390,7 @@ d("Childless header was selected")
                 for _, customFavoriteCategoryData in ipairs(sortedCustomCategoryData) do
                     self:AddSetCategory(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS[customFavoriteCategoryData:GetId()])
                 end
+                ---^- FCOCraftFilter inserted code -^-
 
                 --After that add special default category
                 self:AddSetCategory(CONSOLIDATED_SMITHING_DEFAULT_CATEGORY_DATA)
@@ -2713,7 +2405,10 @@ d("Childless header was selected")
 
                 local nodeToSelect = nil
                 if self.selectedConsolidatedSetData and not self.selectedConsolidatedSetData:IsInstanceOf(ZO_ConsolidatedSmithingDefaultCategoryData)
-                    and self.setNodeLookupData ~= nil and self.selectedConsolidatedSetData.GetItemSetId ~= nil and self.selectedConsolidatedSetData:GetItemSetId() ~= nil then
+                    -- -v- Added by FCOCraftFilter -v-
+                    and self.setNodeLookupData ~= nil and self.selectedConsolidatedSetData.GetItemSetId ~= nil and self.selectedConsolidatedSetData:GetItemSetId() ~= nil
+                    -- -^- Added by FCOCraftFilter -^-
+                then
                     nodeToSelect = self.setNodeLookupData[self.selectedConsolidatedSetData:GetItemSetId()]
                 end
 
@@ -2740,7 +2435,7 @@ d("Childless header was selected")
             end
             --If this is a consolidated crafting station, make sure the active set matches the current selection
             if ZO_Smithing_IsConsolidatedStationCraftingMode() then
-                self = smith
+                local self = smith
                 local selectedData = self.categoryTree:GetSelectedData()
                 if selectedData and selectedData.GetSetIndex == nil then
                     --Special new added favorite categories?
@@ -3154,8 +2849,7 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
     }
     FCOCF.craftingTablePanels = craftingTablePanels
 
-    --Create the settings panel object of libAddonMenu 2.0
-    LAM = LibAddonMenu2
+    --Libraries
     LCM = LibCustomMenu
 
 	addonVars.gAddonLoaded = false
@@ -3230,15 +2924,15 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
         showButtonResearchOnlyCurrentlyResearched = false,
         defaultCraftTabDescriptorEnabled = false,
         defaultCraftTabDescriptor = {
-            [CRAFTING_TYPE_ALCHEMY] =           ZO_ALCHEMY_MODE_CREATION,
-            [CRAFTING_TYPE_BLACKSMITHING] =     SMITHING_MODE_CREATION,
-            [CRAFTING_TYPE_CLOTHIER] =          SMITHING_MODE_CREATION,
-            [CRAFTING_TYPE_ENCHANTING] =        ENCHANTING_MODE_CREATION,
-            [CRAFTING_TYPE_JEWELRYCRAFTING] =   SMITHING_MODE_CREATION,
-            [CRAFTING_TYPE_PROVISIONING] =      PROVISIONER_SPECIAL_INGREDIENT_TYPE_SPICES,
-            [CRAFTING_TYPE_WOODWORKING] =       SMITHING_MODE_CREATION,
-            ["universalDeconstruction"] =       "all",
-            ["retrait"] =                       "retraitTab",
+            [CRAFTING_TYPE_ALCHEMY] =           -1,
+            [CRAFTING_TYPE_BLACKSMITHING] =     -1,
+            [CRAFTING_TYPE_CLOTHIER] =          -1,
+            [CRAFTING_TYPE_ENCHANTING] =        -1,
+            [CRAFTING_TYPE_JEWELRYCRAFTING] =   -1,
+            [CRAFTING_TYPE_PROVISIONING] =      -1,
+            [CRAFTING_TYPE_WOODWORKING] =       -1,
+            ["retrait"] =                       -1,
+            ["universalDeconstruction"] =       -1,
         },
         enableMasterCrafterSetsFavorites = false,
         masterCrafterSetsFavoritesEnabled = {},
@@ -3279,7 +2973,7 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
     FCOCraftFilter_CreateHooks()
 
     --Build the LAM menu
-    BuildAddonMenu()
+    FCOCF.BuildAddonMenu()
 
     -- Register slash commands
     RegisterSlashCommands()
