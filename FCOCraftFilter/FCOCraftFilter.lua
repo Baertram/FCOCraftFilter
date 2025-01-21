@@ -52,6 +52,8 @@ local libFilters_IsUniversalDeconstructionPanelShown
 local libFilters_getUniversalDeconstructionPanelActiveTabFilterType
 local LCM
 
+local isPerfectPixelEnabled = PP and PP.ADDON_NAME ~= nil
+
 local tos = tostring
 
 --local APIVersion = GetAPIVersion()
@@ -1741,7 +1743,7 @@ local function addFilterButtonUniversalDecon(filterType)
     local universalDeconFilterButtons = FCOCF.filterButtons[FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION]
 
     --Compatibility for addon PerfectPixel
-    local xOffset = (PerfectPixel == nil and -380) or -355
+    local xOffset = (isPerfectPixelEnabled == nil and -380) or -355
 
     --UniversalDeconstruction
     --DECONSTRUCTION & Jewelry deconstructin (re-use the same button, just updates the filterType!)
@@ -1845,7 +1847,7 @@ local function updateRetraitButtons(craftSkill)
     FCOCF.locVars.gLastCraftingType = craftSkill
     --Add the button to the retrait station now
     local tooltipVar = ""
-    local xOffset = (PerfectPixel == nil and -445) or -425
+    local xOffset = (isPerfectPixelEnabled == nil and -445) or -425
     AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM, 32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
     --Update the filters for the Retrait station now (again)
     FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, false)
@@ -2004,9 +2006,6 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
     --Implement some checks here in order to abort further handling if not at a crafting station.
     --> if not ZO_CraftingUtils_IsCraftingWindowOpen() or if locVars.gLastCraftingType == nil then return end
     --local localizationVars = FCOCF.localizationVars.FCOCF_loc
-
-    local isPerfectPixelEnabled = PP and PP.ADDON_NAME ~= nil
-
 
     --Disable the medium filters if the settings for the medium filter is disabled
     if not settings.enableMediumFilters then
