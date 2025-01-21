@@ -2005,7 +2005,7 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
     --> if not ZO_CraftingUtils_IsCraftingWindowOpen() or if locVars.gLastCraftingType == nil then return end
     --local localizationVars = FCOCF.localizationVars.FCOCF_loc
 
-    local isPerfectPixelEnabled = (PerfectPixel ~= nil and true) or false
+    local isPerfectPixelEnabled = PP and PP.ADDON_NAME ~= nil
 
 
     --Disable the medium filters if the settings for the medium filter is disabled
