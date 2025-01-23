@@ -1,35 +1,3 @@
---20240404 ApoAlaia in ESUI comments:
---While doing Master crafter table writs via WritWorthy -> FCOCraftFilter enabled (set favorites off)
---[[
-/EsoUI/Libraries/ZO_Tree/ZO_Tree.lua:394: attempt to index a nil value
-
-function ZO_Tree:SelectNode(treeNode, reselectingDuringRebuild, bringParentIntoView)
-    --Default to bringing the immediate parent of this node into view
-    if bringParentIntoView == nil then
-        bringParentIntoView = true
-    end
-
-    --Can only select leaf nodes
---> ERROR HERE (treeNode is nil?):       if treeNode:IsLeaf() and treeNode:IsEnabled() then
-
-stack traceback:
-/EsoUI/Libraries/ZO_Tree/ZO_Tree.lua:394: in function 'ZO_Tree:SelectNode'
-<Locals> self = [table:1]{enabled = T, width = 300, suspendAnimations = T, defaultIndent = 60, autoSelectChildOnNodeOpen = F, exclusive = T, defaultSpacing = -10}, bringParentIntoView = T </Locals>
-user:/AddOns/LibLazyCrafting/Smithing.lua:854: in function 'setCorrectSetIndex_ConsolidatedStation'
-
--> ERROR here: The node SMITHING.setNodeLookupData[setIndex] is nil
--> SMITHING.categoryTree:SelectNode( SMITHING.setNodeLookupData[setIndex])
-
-<Locals> setIndex = 610 </Locals>
-user:/AddOns/LibLazyCrafting/Smithing.lua:893: in function 'LLC_SmithingCraftInteraction'
-<Locals> station = 7, earliest = [table:2]{timestamp = 8, quality = 4, Requester = "WritWorthy", setIndex = 610, smithingQuantity = 1, reference = "4616874197188298559", materialQuantity = 15, pattern = 1, autocraft = T, trait = 32, materialIndex = 40, station = 7, useUniversalStyleItem = F, type = "smithing"}, addon = "WritWorthy", position = 1, earliest = [table:2], addon = "WritWorthy", position = 1, parameters = [table:3]{1 = 1} </Locals>
-user:/AddOns/LibLazyCrafting/LibLazyCrafting.lua:756: in function 'CraftEarliest'
-<Locals> event = 131543, station = 7, stationInteractionTable = [table:4]{station = 7}, earliest = [table:2], addon = "WritWorthy", position = 1 </Locals>
-user:/AddOns/LibLazyCrafting/LibLazyCrafting.lua:768: in function 'CraftInteract'
-<Locals> event = 131543, station = 7, k = 7, v = [table:4] </Locals>
-]]
-
-
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 --FCOCraftFilter.lua
@@ -75,7 +43,7 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.51 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.6.7' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptions 		= '0.6.8' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -1847,6 +1815,7 @@ local function updateRetraitButtons(craftSkill)
     FCOCF.locVars.gLastCraftingType = craftSkill
     --Add the button to the retrait station now
     local tooltipVar = ""
+    isPerfectPixelEnabled = PP and PP.ADDON_NAME ~= nil
     local xOffset = (isPerfectPixelEnabled == nil and -445) or -425
     AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM, 32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
     --Update the filters for the Retrait station now (again)
@@ -2075,6 +2044,9 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
     --local buttonNormalTexture = "/EsoUI/Art/Inventory/inventory_tabIcon_items_up.dds"
     --local buttonClickedTexture = "/esoui/art/mainmenu/menubar_inventory_up.dds"
     --local buttonMediumTexture = "/esoui/art/icons/servicemappins/servicepin_bank.dds"
+
+
+    isPerfectPixelEnabled = PP and PP.ADDON_NAME ~= nil
 
     --Add the button to the head line of the crafting station menu
     --DECONSTRUCTION
@@ -2850,6 +2822,9 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
 
     --Libraries
     LCM = LibCustomMenu
+
+    --AddOns
+    isPerfectPixelEnabled = PP and PP.ADDON_NAME ~= nil
 
 	addonVars.gAddonLoaded = false
 
