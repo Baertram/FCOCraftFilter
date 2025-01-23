@@ -52,6 +52,8 @@ local libFilters_IsUniversalDeconstructionPanelShown
 local libFilters_getUniversalDeconstructionPanelActiveTabFilterType
 local LCM
 
+local isPerfectPixelEnabled = PP and PP.ADDON_NAME ~= nil
+
 local tos = tostring
 
 --local APIVersion = GetAPIVersion()
@@ -1741,7 +1743,7 @@ local function addFilterButtonUniversalDecon(filterType)
     local universalDeconFilterButtons = FCOCF.filterButtons[FCOCF_CRAFTINGTYPE_UNIVERSAL_DECONSTRUCTION]
 
     --Compatibility for addon PerfectPixel
-    local xOffset = (PerfectPixel == nil and -380) or -355
+    local xOffset = (isPerfectPixelEnabled == nil and -380) or -355
 
     --UniversalDeconstruction
     --DECONSTRUCTION & Jewelry deconstructin (re-use the same button, just updates the filterType!)
@@ -1845,7 +1847,7 @@ local function updateRetraitButtons(craftSkill)
     FCOCF.locVars.gLastCraftingType = craftSkill
     --Add the button to the retrait station now
     local tooltipVar = ""
-    local xOffset = (PerfectPixel == nil and -445) or -425
+    local xOffset = (isPerfectPixelEnabled == nil and -445) or -425
     AddButton(zoVars.TRANSMUTATIONSTATION_INVENTORY, zoVars.TRANSMUTATIONSTATION_TABS:GetName() .. "RetraitFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, true) end, nil, nil, tooltipVar, BOTTOM, 32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.TRANSMUTATIONSTATION_TABS, false)
     --Update the filters for the Retrait station now (again)
     FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_RETRAIT, false)
@@ -2005,9 +2007,6 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
     --> if not ZO_CraftingUtils_IsCraftingWindowOpen() or if locVars.gLastCraftingType == nil then return end
     --local localizationVars = FCOCF.localizationVars.FCOCF_loc
 
-    local isPerfectPixelEnabled = (PerfectPixel ~= nil and true) or false
-
-
     --Disable the medium filters if the settings for the medium filter is disabled
     if not settings.enableMediumFilters then
         if settings.filterApplied[LF_SMITHING_REFINE] == FCOCF_ONLY_SHOW_BANKED then
@@ -2126,14 +2125,14 @@ local function FCOCraftFilter_PreHookButtonHandler(comingFrom, calledBy, isUnive
         elseif comingFrom == LF_ENCHANTING_CREATION then
             local xOffset = (isPerfectPixelEnabled == false and -394) or -394
             --Hide the enchantment extraction button
-            AddButton(nil, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "ExtFCOCraftFilterHideBankButton", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,nil, nil, nil, nil, nil, true)
+            AddButton(nil, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "ExtFCOCraftFilterHideBankButton", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,nil, nil, nil, true)
             --Show the enchantment creation button
             addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "CreationFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_CREATION, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
             --ENCHANTING EXTRACTION
         elseif comingFrom == LF_ENCHANTING_EXTRACTION then
             local xOffset = (isPerfectPixelEnabled == false and -505) or -505
             --Hide the enchantment creation button
-            AddButton(nil, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "CreationFCOCraftFilterHideBankButton", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,nil, nil, nil, nil, nil, true)
+            AddButton(nil, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "CreationFCOCraftFilterHideBankButton", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,nil, nil, nil, true)
             --Show the enchantment extraction button
             addedButton = AddButton(zoVars.CRAFTSTATION_ENCHANTING_INVENTORY, zoVars.CRAFTSTATION_ENCHANTING_TABS:GetName() .. "ExtFCOCraftFilterHideBankButton", function(...) FCOCraftFilter_CraftingStationUpdateBankItemOption(LF_ENCHANTING_EXTRACTION, true) end, nil, nil, tooltipVar, BOTTOM,  32, 32, xOffset, 35, BOTTOMLEFT, TOPLEFT, zoVars.CRAFTSTATION_ENCHANTING_TABS, false)
         --TRANSMUTATION / RETRAIT
