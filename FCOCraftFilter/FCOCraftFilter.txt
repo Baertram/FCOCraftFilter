@@ -4,8 +4,8 @@
 ## AddOnVersion: 006080
 ## APIVersion: 101044 101045
 ## Description: Filter crafting station contents (Inventory, bank, all)
-## DependsOn: LibAddonMenu-2.0>=37 LibFilters-3.0>=344
-## OptionalDependsOn: LibCustomMenu>=722
+## DependsOn: LibAddonMenu-2.0>=37 LibFilters-3.0>=343
+## OptionalDependsOn: LibCustomMenu>=722 LibSets>=000707
 ## SavedVariables: FCOCraftFilter_Settings
 
 ##Libraries
@@ -13,6 +13,7 @@
 
 ##Main files
 FCOCraftFilter.lua
+FCOCF_MasterCraftSetStations.lua
 FCOCF_SettingsMenu.lua
 ##Localization
 Localization/FCOCraftFilterLoc.lua

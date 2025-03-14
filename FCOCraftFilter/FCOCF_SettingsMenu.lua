@@ -344,6 +344,30 @@ local function BuildAddonMenu()
             width="full",
             requiresReload = true,
         },
+        {
+            type = "checkbox",
+            name = localizationVars["options_multisets_LibSets_favorites"],
+            tooltip = localizationVars["options_multisets_LibSets_favorites"],
+            getFunc = function() return settings.enableMasterCrafterSetsLibSetsFavorites end,
+            setFunc = function(value) settings.enableMasterCrafterSetsLibSetsFavorites = value
+            end,
+            default = defaults.enableMasterCrafterSetsLibSetsFavorites,
+            width="half",
+            disabled = function() return not settings.enableMasterCrafterSetsFavorites or not LibSets end,
+            requiresReload = true,
+        },
+        {
+            type = "checkbox",
+            name = localizationVars["options_multisets_LibSets_favorites_only"],
+            tooltip = localizationVars["options_multisets_LibSets_favorites_only"],
+            getFunc = function() return settings.enableMasterCrafterSetsLibSetsFavoritesOnly end,
+            setFunc = function(value) settings.enableMasterCrafterSetsLibSetsFavoritesOnly = value
+            end,
+            default = defaults.enableMasterCrafterSetsLibSetsFavoritesOnly,
+            width="half",
+            disabled = function() return not settings.enableMasterCrafterSetsLibSetsFavorites or not LibSets end,
+            requiresReload = true,
+        },
     }
     --Custom Grand Master crafting stations set craete favorite categories, sorted by name
     local sortedCustomMasterCrafterSetStationFavoriteIds = {}

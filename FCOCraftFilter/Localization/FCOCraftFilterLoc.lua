@@ -79,6 +79,9 @@ FCOCF.localizationVars.localizationAll = {
         ["options_multisets_create_enable_favorite"] = "Enable favorite category",
         ["options_multisets_create_enable_favorite_TT"] = "Enable this favorite category at the Grand Master Crafting Stations",
 
+        ["options_multisets_LibSets_favorites"] = "LibSets favorites",
+        ["options_multisets_LibSets_favorites_only"] = "Only LibSets favorites",
+
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
         --Buttons
@@ -148,6 +151,9 @@ FCOCF.localizationVars.localizationAll = {
         ["options_multisets_create_fav_tooltip"] = "Der Favoriten Kategorie Name, welcher an der Großmeister Handwerksstation angezeigt wird",
         ["options_multisets_create_enable_favorite"] = "Aktiviere Favoriten Kategorie",
         ["options_multisets_create_enable_favorite_TT"] = "Aktiviert diese Favoriten Kategorie an der Großmeister Handwerksstation",
+
+        ["options_multisets_LibSets_favorites"] = "LibSets Favoriten",
+        ["options_multisets_LibSets_favorites_only"] = "Nur LibSets Favoriten",
 
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
