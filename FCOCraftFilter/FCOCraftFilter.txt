@@ -5,7 +5,7 @@
 ## APIVersion: 101044 101045
 ## Description: Filter crafting station contents (Inventory, bank, all)
 ## DependsOn: LibAddonMenu-2.0>=37 LibFilters-3.0>=343
-## OptionalDependsOn: LibCustomMenu>=722 LibSets>=000707
+## OptionalDependsOn: LibScrollableMenu>=020304 LibSets>=000707
 ## SavedVariables: FCOCraftFilter_Settings
 
 ##Libraries

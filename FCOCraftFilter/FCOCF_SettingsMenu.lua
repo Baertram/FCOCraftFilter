@@ -5,6 +5,8 @@ local FCOCF = FCOCF
 ------------------------------------------------------------------------------------------------------------------------
 --Libraries
 local LAM = LibAddonMenu2
+local libSets = LibSets
+local LSM = LibScrollableMenu
 
 local tos = tostring
 
@@ -36,6 +38,10 @@ local function BuildAddonMenu()
     local customMasterCrafterSetStationFavoriteIdToName = FCOCF.customMasterCrafterSetStationFavoriteIdToName
     local customMasterCrafterSetStationNameToFavoriteId = FCOCF.customMasterCrafterSetStationNameToFavoriteId
     --local customMasterCrafterSetStationFavoriteIdToTexture = FCOCF.customMasterCrafterSetStationFavoriteIdToTexture
+
+
+    libSets = libSets or LibSets
+    LSM = LSM or LibScrollableMenu
 
 
     local panelData = {
@@ -353,7 +359,7 @@ local function BuildAddonMenu()
             end,
             default = defaults.enableMasterCrafterSetsLibSetsFavorites,
             width="half",
-            disabled = function() return not settings.enableMasterCrafterSetsFavorites or not LibSets end,
+            disabled = function() return not settings.enableMasterCrafterSetsFavorites or not LSM or not libSets end,
             requiresReload = true,
         },
         {
@@ -365,7 +371,7 @@ local function BuildAddonMenu()
             end,
             default = defaults.enableMasterCrafterSetsLibSetsFavoritesOnly,
             width="half",
-            disabled = function() return not settings.enableMasterCrafterSetsLibSetsFavorites or not LibSets end,
+            disabled = function() return not settings.enableMasterCrafterSetsLibSetsFavorites or not LSM or not libSets end,
             requiresReload = true,
         },
     }

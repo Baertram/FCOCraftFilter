@@ -18,7 +18,6 @@ local libFilters_GetCtrl
 local libFilters_IsUniversalDeconstructionSupportedFilterType
 local libFilters_IsUniversalDeconstructionPanelShown
 local libFilters_getUniversalDeconstructionPanelActiveTabFilterType
-local LCM
 
 local isPerfectPixelEnabled = PP and PP.ADDON_NAME ~= nil
 
@@ -354,6 +353,7 @@ FCOCF.localizationVars.FCOCF_loc = {}
 --Textures
 FCOCF.textures = {}
 local textures = FCOCF.textures
+local emptyIcon             = "/esoui/art/icons/heraldrycrests_misc_blank_01.dds"
 local textureAll            = "/EsoUI/Art/Inventory/inventory_tabIcon_items_up.dds"
 local textureOnlyInventory  = "/esoui/art/mainmenu/menubar_inventory_up.dds"
 local textureOnlyBank       = "/esoui/art/icons/servicemappins/servicepin_bank.dds"
@@ -363,7 +363,8 @@ local textureCurrentlyResearchedDown = "/esoui/art/crafting/smithing_tabicon_res
 local textureCurrentlyResearched = "/esoui/art/tutorial/smithing_tabicon_research_up.dds"
 local textureOnlyWorn       = "EsoUI/Art/WritAdvisor/advisor_tabIcon_equip_up.dds"
 local favoriteIcon          = "EsoUI/Art/Collections/Favorite_StarOnly.dds"
-local favIconStr = zo_iconTextFormatNoSpace(favoriteIcon, 24, 24, "")
+local favIconStr = zo_iconFormat(favoriteIcon, 24, 24)
+textures.emptyIcon = emptyIcon
 textures.textureAll = textureAll
 textures.textureOnlyInventory = textureOnlyInventory
 textures.textureOnlyBank = textureOnlyBank
@@ -375,6 +376,30 @@ textures.textureOnlyWorn = textureOnlyWorn
 textures.favoriteIcon = favoriteIcon
 textures.favIconStr = favIconStr
 
+
+--MasterCrafter tables - New data favorite category ID
+local FAVORITES_TANK_CATEGORY_ID = 99001
+local FAVORITES_STAM_HEAL_CATEGORY_ID = 99002
+local FAVORITES_MAG_HEAL_CATEGORY_ID = 99003
+local FAVORITES_STAM_DD_CATEGORY_ID = 99004
+local FAVORITES_MAG_DD_CATEGORY_ID = 99005
+local FAVORITES_HYBRID_DD_CATEGORY_ID = 99006
+FCOCF.FAVORITES_TANK_CATEGORY_ID = FAVORITES_TANK_CATEGORY_ID
+FCOCF.FAVORITES_STAM_HEAL_CATEGORY_ID = FAVORITES_STAM_HEAL_CATEGORY_ID
+FCOCF.FAVORITES_MAG_HEAL_CATEGORY_ID = FAVORITES_MAG_HEAL_CATEGORY_ID
+FCOCF.FAVORITES_STAM_DD_CATEGORY_ID = FAVORITES_STAM_DD_CATEGORY_ID
+FCOCF.FAVORITES_MAG_DD_CATEGORY_ID = FAVORITES_MAG_DD_CATEGORY_ID
+FCOCF.FAVORITES_HYBRID_DD_CATEGORY_ID = FAVORITES_HYBRID_DD_CATEGORY_ID
+
+local customMasterCrafterSetStationFavoriteIds = {
+    [FAVORITES_TANK_CATEGORY_ID] = true,
+    [FAVORITES_STAM_HEAL_CATEGORY_ID] = true,
+    [FAVORITES_MAG_HEAL_CATEGORY_ID] = true,
+    [FAVORITES_STAM_DD_CATEGORY_ID] = true,
+    [FAVORITES_MAG_DD_CATEGORY_ID] = true,
+    [FAVORITES_HYBRID_DD_CATEGORY_ID] = true,
+}
+FCOCF.customMasterCrafterSetStationFavoriteIds = customMasterCrafterSetStationFavoriteIds
 
 --===================== FUNCTIONS ==============================================
 
@@ -2253,9 +2278,6 @@ local function FCOCraftFilter_Loaded(eventCode, addOnName)
         [LF_RETRAIT]                = controlsForChecks.retraitPanel,
     }
     FCOCF.craftingTablePanels = craftingTablePanels
-
-    --Libraries
-    LCM = LibCustomMenu
 
     --AddOns
     isPerfectPixelEnabled = PP and PP.ADDON_NAME ~= nil

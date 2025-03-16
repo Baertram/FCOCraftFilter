@@ -13,38 +13,26 @@ local zoVars = FCOCF.zoVars
 local smith     = zoVars.CRAFTSTATION_SMITHING_VAR
 
 --Libraries
-local LCM = LibCustomMenu
+local LSM = LibScrollableMenu
 local libSets = LibSets
 
 --Textures
 local textures = FCOCF.textures
 local favoriteIcon = textures.favoriteIcon
 local favIconStr = textures.favIconStr
+local emptyTexture = textures.emptyIcon
 
 ------------------------------------------------------------------------------------------------------------------------
 --MasterCrafter tables - New data favorite category ID
-local FAVORITES_TANK_CATEGORY_ID = 99001
-local FAVORITES_STAM_HEAL_CATEGORY_ID = 99002
-local FAVORITES_MAG_HEAL_CATEGORY_ID = 99003
-local FAVORITES_STAM_DD_CATEGORY_ID = 99004
-local FAVORITES_MAG_DD_CATEGORY_ID = 99005
-local FAVORITES_HYBRID_DD_CATEGORY_ID = 99006
-FCOCF.FAVORITES_TANK_CATEGORY_ID = FAVORITES_TANK_CATEGORY_ID
-FCOCF.FAVORITES_STAM_HEAL_CATEGORY_ID = FAVORITES_STAM_HEAL_CATEGORY_ID
-FCOCF.FAVORITES_MAG_HEAL_CATEGORY_ID = FAVORITES_MAG_HEAL_CATEGORY_ID
-FCOCF.FAVORITES_STAM_DD_CATEGORY_ID = FAVORITES_STAM_DD_CATEGORY_ID
-FCOCF.FAVORITES_MAG_DD_CATEGORY_ID = FAVORITES_MAG_DD_CATEGORY_ID
-FCOCF.FAVORITES_HYBRID_DD_CATEGORY_ID = FAVORITES_HYBRID_DD_CATEGORY_ID
+local FAVORITES_TANK_CATEGORY_ID = FCOCF.FAVORITES_TANK_CATEGORY_ID
+local FAVORITES_STAM_HEAL_CATEGORY_ID = FCOCF.FAVORITES_STAM_HEAL_CATEGORY_ID
+local FAVORITES_MAG_HEAL_CATEGORY_ID = FCOCF.FAVORITES_MAG_HEAL_CATEGORY_ID
+local FAVORITES_STAM_DD_CATEGORY_ID = FCOCF.FAVORITES_STAM_DD_CATEGORY_ID
+local FAVORITES_MAG_DD_CATEGORY_ID = FCOCF.FAVORITES_MAG_DD_CATEGORY_ID
+local FAVORITES_HYBRID_DD_CATEGORY_ID = FCOCF.FAVORITES_HYBRID_DD_CATEGORY_ID
 local FAVORITES_FCOCF_CATEGORY_ID_LibSets = 99100 --LibSets starts at 99100
 
-local customMasterCrafterSetStationFavoriteIds = {
-    [FAVORITES_TANK_CATEGORY_ID] = true,
-    [FAVORITES_STAM_HEAL_CATEGORY_ID] = true,
-    [FAVORITES_MAG_HEAL_CATEGORY_ID] = true,
-    [FAVORITES_STAM_DD_CATEGORY_ID] = true,
-    [FAVORITES_MAG_DD_CATEGORY_ID] = true,
-    [FAVORITES_HYBRID_DD_CATEGORY_ID] = true,
-}
+local customMasterCrafterSetStationFavoriteIds = FCOCF.customMasterCrafterSetStationFavoriteIds
 local customMasterCrafterSetStationFavoriteOfLibSets = {}
 
 local customMasterCrafterSetStationFavoriteIdToNameDefaults = {
@@ -71,6 +59,10 @@ FCOCF.customMasterCrafterSetStationFavoriteIdToNameDefaults = customMasterCrafte
 FCOCF.customMasterCrafterSetStationFavoriteIdToName = customMasterCrafterSetStationFavoriteIdToName
 FCOCF.customMasterCrafterSetStationNameToFavoriteId = customMasterCrafterSetStationNameToFavoriteId
 FCOCF.customMasterCrafterSetStationFavoriteIdToTexture = customMasterCrafterSetStationFavoriteIdToTexture
+
+local customMasterCrafterSetStationFavoriteDividerTextures = { up = emptyTexture, down = emptyTexture, over = emptyTexture }
+local dividerTexture = "EsoUI/Art/Miscellaneous/horizontalDivider.dds"
+local dividerStr = zo_iconTextFormatNoSpace(dividerTexture, 180, 8, "", nil)
 ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -80,6 +72,9 @@ FCOCF.customMasterCrafterSetStationFavoriteIdToTexture = customMasterCrafterSetS
 -- Consolidated Smithing Set Favorite Data --
 ------------------------------------
 local FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS = {}
+--FCOCF.FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS = FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS
+
+local FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_DIVIDER = nil
 
 local function isAnyMasterCrafterStationSetUnlocked()
     if GetNumConsolidatedSmithingSets() > 0 and GetNumUnlockedConsolidatedSmithingSets() > 0 then
@@ -204,22 +199,27 @@ end
 
 local FCOCS_ConsolidatedSmithingSetFavoriteData = ZO_ConsolidatedSmithingSetCategoryData:Subclass()
 
-function FCOCS_ConsolidatedSmithingSetFavoriteData:Initialize(customFavoriteId, isLibSets)
-    local objData = ZO_ConsolidatedSmithingSetCategoryData:New(customFavoriteId) --sets the categoryId = customFavoriteId and the .sets table = {}
-    objData.isLibSets = isLibSets
-    return objData
+function FCOCS_ConsolidatedSmithingSetFavoriteData:Initialize(customFavoriteId, isLibSets, isDivider)
+    self.sets = {}
+    self.categoryId = customFavoriteId
+    self.isLibSets = isLibSets
+    self.isDivider = isDivider
+    return self
 end
 
 function FCOCS_ConsolidatedSmithingSetFavoriteData:GetName()
+    if self.isDivider then return dividerStr end
     return getCustomSetFavoriteCategoryName(self:GetId(), self.isLibSets)
 end
 
 function FCOCS_ConsolidatedSmithingSetFavoriteData:GetKeyboardIcons()
+    if self.isDivider then return customMasterCrafterSetStationFavoriteDividerTextures.up, customMasterCrafterSetStationFavoriteDividerTextures.down, customMasterCrafterSetStationFavoriteDividerTextures.over end
     local textureData = customMasterCrafterSetStationFavoriteIdToTexture[self:GetId()]
     return textureData.up, textureData.down, textureData.over
 end
 
 function FCOCS_ConsolidatedSmithingSetFavoriteData:GetGamepadIcon()
+    if self.isDivider then return customMasterCrafterSetStationFavoriteDividerTextures.up, customMasterCrafterSetStationFavoriteDividerTextures.down, customMasterCrafterSetStationFavoriteDividerTextures.over end
     local textureData = customMasterCrafterSetStationFavoriteIdToTexture[self:GetId()]
     return textureData.up
 end
@@ -251,7 +251,8 @@ local function getLibSetsFavorites(favoriteCategoryIdCurrentlyMax)
             customMasterCrafterSetStationLibSetsFavoriteIds[libSetsCategoryId] = true
 
             --Add the texture and names too
-            customMasterCrafterSetStationFavoriteIdToTexture[libSetsCategoryId] = libSetsCategoryData.texture
+            local texturePath = libSetsCategoryData.texture
+            customMasterCrafterSetStationFavoriteIdToTexture[libSetsCategoryId] = { up = texturePath, down = texturePath, over = texturePath }
             customMasterCrafterSetStationFavoriteIdToNameDefaults[libSetsCategoryId] = libSetsCategoryData.categoryName
         end
     end
@@ -267,6 +268,9 @@ local function rebuildEnabledSmithingCreateMasterCrafterCustomFavoriteCategories
     libSets = libSets or LibSets
     local isSetFavoriteCategoriesEnabledForLibSets = (libSets ~= nil and settings.enableMasterCrafterSetsLibSetsFavorites) or false
     local isSetFavoriteCategoriesEnabledForLibSetsOnly = (isSetFavoriteCategoriesEnabledForLibSets and settings.enableMasterCrafterSetsLibSetsFavoritesOnly) or false
+
+    --The divider header row
+    FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_DIVIDER = FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_DIVIDER or FCOCS_ConsolidatedSmithingSetFavoriteData:New(99999, false, true)
 
     --FCOCF Favorites
     if not isSetFavoriteCategoriesEnabledForLibSetsOnly then
@@ -357,6 +361,12 @@ FCOCF.BuildCustomSetFavoriteCategoryNames = buildCustomSetFavoriteCategoryNames
 --======================================================================================================================
 
 function FCOCF.HookCrafting_MasterSetCrafterTables_Create()
+    --LibCustomMenu is loaded?
+    LSM = LSM or LibScrollableMenu
+    libSets = libSets or LibSets
+
+    if not LSM then return end
+
     local settings = FCOCF.settingsVars.settings
     local isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
 
@@ -364,23 +374,48 @@ function FCOCF.HookCrafting_MasterSetCrafterTables_Create()
     if isSetFavoriteCategoriesEnabledInTotal then
         rebuildEnabledSmithingCreateMasterCrafterCustomFavoriteCategories()
 
-        --Master Crafter set tables -> ZO_Tree -> AddTemplate function for the XML set entry (each node/child)
+        --Master Crafter set tables -> ZO_Tree -> AddTemplate function for the XML set entry (each node/child) -> See smithing_keyboard.lua
         ---> smithing_keyboard.lua, AddTemplate("ZO_ConsolidatedSmithingSetNavigationEntry", TreeEntrySetup, TreeEntryOnSelected, SetEqualityFunction)
+        --[[
+                local origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData = ZO_ShallowTableCopy(smith.categoryTree.templateInfo["ZO_StatusIconHeader"])
+                smith.categoryTree.templateInfo["ZO_StatusIconHeader"].selectionFunction = function(...)
+                    if origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData.selectionFunction ~= nil then
+                        origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData.selectionFunction(...)
+                    end
+                end
+                local origSmithingCreateTreeListHeaderWithStatusIconWithoutChildrenEntryData = ZO_ShallowTableCopy(smith.categoryTree.templateInfo["ZO_StatusIconChildlessHeader"])
+                smith.categoryTree.templateInfo["ZO_StatusIconChildlessHeader"].selectionFunction = function(...)
+                    if origSmithingCreateTreeListHeaderWithStatusIconWithoutChildrenEntryData.selectionFunction ~= nil then
+                        origSmithingCreateTreeListHeaderWithStatusIconWithoutChildrenEntryData.selectionFunction(...)
+                    end
+        d("Childless header was selected")
+                end
+        ]]
+
 --[[
-        local origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData = ZO_ShallowTableCopy(smith.categoryTree.templateInfo["ZO_StatusIconHeader"])
-        smith.categoryTree.templateInfo["ZO_StatusIconHeader"].selectionFunction = function(...)
-            if origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData.selectionFunction ~= nil then
-                origSmithingCreateTreeListHeaderWithStatusIconAndChildrenEntryData.selectionFunction(...)
+        local origSmithingCreateTreeListHeader = smith.categoryTree.templateInfo["ZO_StatusIconHeader"]
+        SecurePostHook(origSmithingCreateTreeListHeader, "setupFunction", function(node, control, setData, open, userRequested, enabled)
+            local textCtrl = control:GetNamedChild("Text")
+--d("[FCOCF]ZO_StatusIconHeader posthook - " ..tostring(textCtrl and textCtrl:GetText() or "n/a"))
+            if not control.statusIcon then
+                control.statusIcon = control:GetNamedChild("StatusIcon")
             end
-        end
-        local origSmithingCreateTreeListHeaderWithStatusIconWithoutChildrenEntryData = ZO_ShallowTableCopy(smith.categoryTree.templateInfo["ZO_StatusIconChildlessHeader"])
-        smith.categoryTree.templateInfo["ZO_StatusIconChildlessHeader"].selectionFunction = function(...)
-            if origSmithingCreateTreeListHeaderWithStatusIconWithoutChildrenEntryData.selectionFunction ~= nil then
-                origSmithingCreateTreeListHeaderWithStatusIconWithoutChildrenEntryData.selectionFunction(...)
-            end
-d("Childless header was selected")
-        end
+            control.statusIcon:SetDimensions(18, 18)
+        end)
 ]]
+
+        local origSmithingCreateTreeListChildlessHeader = smith.categoryTree.templateInfo["ZO_StatusIconChildlessHeader"]
+        SecurePostHook(origSmithingCreateTreeListChildlessHeader, "setupFunction", function(node, control, setData, open, userRequested, enabled)
+            if setData and setData.isDivider then
+                local textCtrl = control:GetNamedChild("Text")
+--d("[FCOCF]ZO_StatusIconChildlessHeader posthook - " ..tostring(textCtrl and textCtrl:GetText() or "n/a"))
+                --Set the control's text, icon and statusicon controls "non clickable"
+                for i=1, control:GetNumChildren(), 1 do
+                    local childCtrl = control:GetChild(i)
+                    childCtrl:SetMouseEnabled(false)
+                end
+            end
+        end)
 
         local origSmithingCreateTreeListSetEntryData = smith.categoryTree.templateInfo["ZO_ConsolidatedSmithingSetNavigationEntry"]
         --Add the context menu to the setup functions
@@ -388,75 +423,105 @@ d("Childless header was selected")
         --smith.categoryTree.templateInfo["ZO_ConsolidatedSmithingSetNavigationEntry"].setupFunction = newSmithingCreateTreeListSetEntrySetupFunc
         SecurePostHook(origSmithingCreateTreeListSetEntryData, "setupFunction", function(node, control, setData, open, userRequested, enabled)
             control:SetHandler("OnMouseUp", function(ctrl, mouseButton, upInside)
-                if upInside and mouseButton == MOUSE_BUTTON_INDEX_RIGHT then
-                    if setData:IsUnlocked() == true then
-                        ClearMenu()
+                if upInside then
+                    if setData.isDivider then
+                        return
+                    end
 
-                        local setId = setData:GetItemSetId()
-                        --d(">setId: " .. tos(setId))
-                        if setId == nil then return end
+                    if mouseButton == MOUSE_BUTTON_INDEX_RIGHT then
+                        if setData:IsUnlocked() == true then
+                            ClearMenu()
 
-                        local contextMenuItemAddFunc = AddMenuItem
-                        --LibCustomMenu is loaded?
-                        LCM = LCM or LibCustomMenu
-                        libSets = libSets or LibSets
-                        if LCM ~= nil then
-                            contextMenuItemAddFunc = AddCustomMenuItem
-                        end
+                            local setId = setData:GetItemSetId()
+                            --d(">setId: " .. tos(setId))
+                            if setId == nil then return end
 
-                        settings = FCOCF.settingsVars.settings
-                        isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
-                        if not isSetFavoriteCategoriesEnabledInTotal then return end
-                        --local isSetFavoriteCategoriesEnabledForLibSets = (libSets ~= nil and settings.enableMasterCrafterSetsLibSetsFavorites) or false
-                        --local isSetFavoriteCategoriesEnabledForLibSetsOnly = (isSetFavoriteCategoriesEnabledForLibSets and settings.enableMasterCrafterSetsLibSetsFavoritesOnly) or false
+                            settings = FCOCF.settingsVars.settings
+                            isSetFavoriteCategoriesEnabledInTotal = settings.enableMasterCrafterSetsFavorites
+                            if not isSetFavoriteCategoriesEnabledInTotal then return end
+                            --local isSetFavoriteCategoriesEnabledForLibSets = (libSets ~= nil and settings.enableMasterCrafterSetsLibSetsFavorites) or false
+                            --local isSetFavoriteCategoriesEnabledForLibSetsOnly = (isSetFavoriteCategoriesEnabledForLibSets and settings.enableMasterCrafterSetsLibSetsFavoritesOnly) or false
 
-                        local masterCrafterSetsFavorites = settings.masterCrafterSetsFavorites
-                        if masterCrafterSetsFavorites == nil then return end
-                        local masterCrafterSetsFavoritesEnabled = settings.masterCrafterSetsFavoritesEnabled
-                        if masterCrafterSetsFavoritesEnabled == nil then return end
+                            local masterCrafterSetsFavorites = settings.masterCrafterSetsFavorites
+                            if masterCrafterSetsFavorites == nil then return end
+                            local masterCrafterSetsFavoritesEnabled = settings.masterCrafterSetsFavoritesEnabled
+                            if masterCrafterSetsFavoritesEnabled == nil then return end
 
-                        --Show FCOCF and LibSets favorites
-                        --[[
-                        if not isSetFavoriteCategoriesEnabledForLibSetsOnly then
+                            --Show FCOCF and LibSets favorites
+                            --[[
+                            if not isSetFavoriteCategoriesEnabledForLibSetsOnly then
 
-                        else
-                            --Show only LibSets favorites -> Handled in buildUp tables
-                        end
-                        ]]
+                            else
+                                --Show only LibSets favorites -> Handled in buildUp tables
+                            end
+                            ]]
 
-                        for customFavoriteId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do --Contains either FCOCF, FCOCF and LibSets or only LibSets favorites
-                            if isEnabled == true and masterCrafterSetsFavoritesEnabled[customFavoriteId] == true then
-                                if masterCrafterSetsFavorites[customFavoriteId] == nil then return end
-                                local isSavedFavoritesEmpty = ZO_IsTableEmpty(masterCrafterSetsFavorites[customFavoriteId])
+                            for customFavoriteId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do --Contains either FCOCF, FCOCF and LibSets or only LibSets favorites
+                                if isEnabled == true and masterCrafterSetsFavoritesEnabled[customFavoriteId] == true then
+                                    if masterCrafterSetsFavorites[customFavoriteId] == nil then return end
+                                    local isSavedFavoritesEmpty = ZO_IsTableEmpty(masterCrafterSetsFavorites[customFavoriteId])
 
-                                --local isLibSetsFavorityCategory = customMasterCrafterSetStationFavoriteOfLibSets[customFavoriteId] or false
+                                    --local isLibSetsFavorityCategory = customMasterCrafterSetStationFavoriteOfLibSets[customFavoriteId] or false
 
-                                local categoryName = GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. ": " .. getCustomSetFavoriteCategoryName(customFavoriteId)
-                                local categoryStr = ""
-                                if categoryStr == nil then return end
-                                if LCM == nil then
-                                    categoryStr = " [" .. categoryName .. "]"
-                                else
-                                    AddCustomMenuItem(categoryName, function()   end, MENU_ADD_OPTION_HEADER)
-                                end
+                                    local categoryName = GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. ": " .. getCustomSetFavoriteCategoryName(customFavoriteId)
+                                    local categoryStr = " " .. categoryName
 
-                                if masterCrafterSetsFavorites[customFavoriteId][setId] == nil then
-                                    contextMenuItemAddFunc("+" .. favIconStr .. GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. categoryStr, function()
-                                        changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, true)
-                                    end)
-                                else
-                                    contextMenuItemAddFunc("-" .. favIconStr .. GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE) .. categoryStr, function()
-                                        changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, false)
-                                    end)
-                                end
-                                if not isSavedFavoritesEmpty then
-                                    contextMenuItemAddFunc(favIconStr .. "   |cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r" .. categoryStr, function()
-                                        changeMasterCrafterSetFavorites(nil, nil, customFavoriteId, false, true)
-                                    end)
+                                    local favoriteCategoryTexture = customMasterCrafterSetStationFavoriteIdToTexture[customFavoriteId] and zo_iconFormat(customMasterCrafterSetStationFavoriteIdToTexture[customFavoriteId].up, 24, 24) or favIconStr
+
+                                    local subMenuEntries = {}
+
+                                    if masterCrafterSetsFavorites[customFavoriteId][setId] == nil then
+                                        --[[
+                                        AddCustomScrollableMenuEntry("+" .. favIconStr .. GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. categoryStr, function()
+                                            changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, true)
+                                        end)
+                                        ]]
+                                        subMenuEntries[#subMenuEntries + 1] = {
+                                            name = "+" .. favoriteCategoryTexture .. categoryStr,
+                                            --label = "+" .. favoriteCategoryTexture,
+                                            tooltip = "+" .. favoriteCategoryTexture .. GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. categoryStr,
+                                            callback = function()
+                                                changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, true)
+                                            end
+                                        }
+                                    else
+                                        --[[
+                                        contextMenuItemAddFunc("-" .. favIconStr .. GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE) .. categoryStr, function()
+                                            changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, false)
+                                        end)
+                                        ]]
+                                        subMenuEntries[#subMenuEntries + 1] = {
+                                            name = "-" .. favoriteCategoryTexture .. categoryStr,
+                                            --label = "+" .. favoriteCategoryTexture,
+                                            tooltip = "-" .. favoriteCategoryTexture .. GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE) .. categoryStr,
+                                            callback = function()
+                                                changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, true)
+                                            end
+                                        }
+                                    end
+                                    if not isSavedFavoritesEmpty then
+                                        --[[
+                                        contextMenuItemAddFunc(favIconStr .. "   |cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r" .. categoryStr, function()
+                                            changeMasterCrafterSetFavorites(nil, nil, customFavoriteId, false, true)
+                                        end)
+                                        ]]
+                                        subMenuEntries[#subMenuEntries + 1] = {
+                                            name = favoriteCategoryTexture .. "   |cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r"  .. categoryStr,
+                                            --label = "+" .. favIconStr,
+                                            tooltip = favoriteCategoryTexture .. "   |cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r" .. categoryStr,
+                                            callback = function()
+                                                changeMasterCrafterSetFavorites(nil, nil, customFavoriteId, false, true)
+                                            end
+                                        }
+                                    end
+
+                                    if not ZO_IsTableEmpty(subMenuEntries) then
+                                        AddCustomScrollableSubMenuEntry(categoryName, subMenuEntries)
+                                    end
                                 end
                             end
+                            ShowCustomScrollableMenu(ctrl, { sortEntries = true })
                         end
-                        ShowMenu(ctrl)
                     end
                 end
             end, "FCOChangeStuff_Smithing_Create_SetEntry_ContextMenu")
@@ -465,8 +530,8 @@ d("Childless header was selected")
 
         --local origSmithingRefreshSetCategories = smith.RefreshSetCategories
         function smith.RefreshSetCategories()
-        --function zo_smith:RefreshSetCategories()
-    --d("[FCOCS]SMITHING:RefreshSetCategories")
+            --function zo_smith:RefreshSetCategories()
+            --d("[FCOCS]SMITHING:RefreshSetCategories")
             local self = smith
             self.categoryTree:Reset()
             ZO_ClearTable(self.setNodeLookupData)
@@ -493,7 +558,11 @@ d("Childless header was selected")
                 for _, customFavoriteCategoryData in ipairs(sortedCustomCategoryData) do
                     self:AddSetCategory(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_OBJECTS[customFavoriteCategoryData:GetId()])
                 end
+
+                --Add 1 category entry which only shows a divider row
+                self:AddSetCategory(FCOCS_SMITHING_FAVORITES_CATEGORY_DATA_DIVIDER)
                 ---^- FCOCraftFilter inserted code -^-
+
 
                 --After that add special default category
                 self:AddSetCategory(CONSOLIDATED_SMITHING_DEFAULT_CATEGORY_DATA)
@@ -508,9 +577,10 @@ d("Childless header was selected")
 
                 local nodeToSelect = nil
                 if self.selectedConsolidatedSetData and not self.selectedConsolidatedSetData:IsInstanceOf(ZO_ConsolidatedSmithingDefaultCategoryData)
-                    -- -v- Added by FCOCraftFilter -v-
-                    and self.setNodeLookupData ~= nil and self.selectedConsolidatedSetData.GetItemSetId ~= nil and self.selectedConsolidatedSetData:GetItemSetId() ~= nil
-                    -- -^- Added by FCOCraftFilter -^-
+                        -- -v- Added by FCOCraftFilter -v-
+                        and not self.selectedConsolidatedSetData.isDivider
+                        and self.setNodeLookupData ~= nil and self.selectedConsolidatedSetData.GetItemSetId ~= nil and self.selectedConsolidatedSetData:GetItemSetId() ~= nil
+                        -- -^- Added by FCOCraftFilter -^-
                 then
                     nodeToSelect = self.setNodeLookupData[self.selectedConsolidatedSetData:GetItemSetId()]
                 end
