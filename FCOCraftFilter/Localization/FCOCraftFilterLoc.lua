@@ -81,6 +81,7 @@ FCOCF.localizationVars.localizationAll = {
 
         ["options_multisets_LibSets_favorites"] = "LibSets favorites",
         ["options_multisets_LibSets_favorites_only"] = "Only LibSets favorites",
+        ["favorites_remove_all_categories"] = "!ATTENTION! All categories will be reset!",
 
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",
@@ -154,6 +155,7 @@ FCOCF.localizationVars.localizationAll = {
 
         ["options_multisets_LibSets_favorites"] = "LibSets Favoriten",
         ["options_multisets_LibSets_favorites_only"] = "Nur LibSets Favoriten",
+        ["favorites_remove_all_categories"] = "!ACHTUNG! Alle Kategorien werden zurückgesetzt!",
 
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|cFFFF00CraftFilter|cFFFFFF",

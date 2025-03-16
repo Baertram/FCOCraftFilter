@@ -42,7 +42,7 @@ FCOCF.addonVars.addonNameMenu				= "FCO CraftFilter"
 FCOCF.addonVars.addonNameMenuDisplay		= "|c00FF00FCO |cFFFF00CraftFilter|r"
 FCOCF.addonVars.addonAuthor 				= '|cFFFF00Baertram|r'
 FCOCF.addonVars.addonVersion		   		= 0.51 -- Changing this will reset SavedVariables!
-FCOCF.addonVars.addonVersionOptions 		= '0.6.8' -- version shown in the settings panel
+FCOCF.addonVars.addonVersionOptions 		= '0.6.9' -- version shown in the settings panel
 FCOCF.addonVars.addonVersionOptionsNumber 	= tonumber(FCOCF.addonVars.addonVersionOptions)
 FCOCF.addonVars.addonSavedVariablesName		= "FCOCraftFilter_Settings"
 FCOCF.addonVars.addonWebsite                = "http://www.esoui.com/downloads/info1104-FCOCraftFilter.html"
@@ -362,6 +362,8 @@ local textureNoCraftBag     = "/esoui/art/hud/gamepad/gp_loothistory_icon_craftb
 local textureCurrentlyResearchedDown = "/esoui/art/crafting/smithing_tabicon_research_disabled.dds"
 local textureCurrentlyResearched = "/esoui/art/tutorial/smithing_tabicon_research_up.dds"
 local textureOnlyWorn       = "EsoUI/Art/WritAdvisor/advisor_tabIcon_equip_up.dds"
+local savedInCategoryTexture = "/esoui/art/miscellaneous/check.dds"
+--local notSavedInCategoryTexture = "/esoui/art/mainmenu/menubar_inventory_up.dds"
 local favoriteIcon          = "EsoUI/Art/Collections/Favorite_StarOnly.dds"
 local favIconStr = zo_iconFormat(favoriteIcon, 24, 24)
 textures.emptyIcon = emptyIcon
@@ -375,6 +377,8 @@ textures.textureCurrentlyResearched = textureCurrentlyResearched
 textures.textureOnlyWorn = textureOnlyWorn
 textures.favoriteIcon = favoriteIcon
 textures.favIconStr = favIconStr
+textures.savedInCategoryTexture = savedInCategoryTexture
+textures.notSavedInCategoryTexture = notSavedInCategoryTexture
 
 
 --MasterCrafter tables - New data favorite category ID

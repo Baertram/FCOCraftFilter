@@ -21,6 +21,9 @@ local textures = FCOCF.textures
 local favoriteIcon = textures.favoriteIcon
 local favIconStr = textures.favIconStr
 local emptyTexture = textures.emptyIcon
+local savedInCategoryTexture = textures.savedInCategoryTexture
+local savedInCategoryTextureText = "|c33FF00" .. zo_iconTextFormatNoSpace(savedInCategoryTexture, 20, 20, "", true) .. "|r"
+local notSavedInCategoryTexture = textures.notSavedInCategoryTexture
 
 ------------------------------------------------------------------------------------------------------------------------
 --MasterCrafter tables - New data favorite category ID
@@ -65,6 +68,12 @@ local dividerTexture = "EsoUI/Art/Miscellaneous/horizontalDivider.dds"
 local dividerStr = zo_iconTextFormatNoSpace(dividerTexture, 180, 8, "", nil)
 ------------------------------------------------------------------------------------------------------------------------
 
+local setFavoriteLSMOptions = {
+    enableFilter = true,
+    headerCollapsible = true,
+    sortEntries = true,
+}
+
 
 --===================== CLASSES ==============================================
 
@@ -88,10 +97,32 @@ local function refreshSmithingCreationTree()
     smith:RefreshSetCategories()
 end
 
-local function doClearMasterCrafterSetFavoritesNow(customFavoriteId)
-    if customFavoriteId == nil then return end
-    FCOCF.settingsVars.settings.masterCrafterSetsFavorites[customFavoriteId] = {}
-    refreshSmithingCreationTree()
+local function areMasterCrafterSetsFavoritesEmpty()
+    local settings = FCOCF.settingsVars.settings
+    local masterCrafterSetsFavorites = settings.masterCrafterSetsFavorites
+    local countTotal = 0
+    for _, data in pairs(masterCrafterSetsFavorites) do
+        countTotal = countTotal + NonContiguousCount(data)
+        if countTotal > 0 then return false end
+    end
+    return countTotal == 0
+end
+
+local function doClearMasterCrafterSetFavoritesNow(customFavoriteId, clearAllCategories)
+    if customFavoriteId == nil and clearAllCategories == nil then return end
+    local doRefreshNow = false
+    if customFavoriteId ~= nil and not clearAllCategories then
+        FCOCF.settingsVars.settings.masterCrafterSetsFavorites[customFavoriteId] = {}
+        doRefreshNow = true
+    elseif customFavoriteId == nil and clearAllCategories == true then
+        for l_customFavoriteId, _ in pairs(FCOCF.settingsVars.settings.masterCrafterSetsFavorites) do
+            FCOCF.settingsVars.settings.masterCrafterSetsFavorites[l_customFavoriteId] = {}
+        end
+        doRefreshNow = true
+    end
+    if doRefreshNow then
+        refreshSmithingCreationTree()
+    end
 end
 
 local function getCustomSetFavoriteCategoryName(customFavoriteCategoryId, isLibSets)
@@ -119,7 +150,10 @@ local function initializeClearMasterCrafterSetFavoritesDialog()
         },
         mainText = function(dialog)
             local customFavoriteId = dialog.data.customFavoriteId
-            return { text = favIconStr .. " " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. " " .. GetString(SI_COLLECTIONS_FAVORITES_CATEGORY_HEADER) .. "?\n" .. GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. " \'" .. getCustomSetFavoriteCategoryName(customFavoriteId) .."\'" }
+            local  customFavoriteTexture = (customFavoriteId ~= nil and customMasterCrafterSetStationFavoriteIdToTexture[customFavoriteId] and zo_iconFormat(customMasterCrafterSetStationFavoriteIdToTexture[customFavoriteId].up, 24, 24)) or ""
+            local mainText = customFavoriteId ~= nil and favIconStr .. " " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. " " .. GetString(SI_COLLECTIONS_FAVORITES_CATEGORY_HEADER) .. "?\n" .. GetString(SI_CUSTOMER_SERVICE_CATEGORY) .. " \'" .. customFavoriteTexture .. getCustomSetFavoriteCategoryName(customFavoriteId) .. "\'"
+                or favIconStr .. " " .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. " " .. GetString(SI_COLLECTIONS_FAVORITES_CATEGORY_HEADER) .. "?\n" .. FCOCF.localizationVars.FCOCF_loc["favorites_remove_all_categories"]
+            return { text = mainText }
         end,
         buttons =
         {
@@ -128,7 +162,8 @@ local function initializeClearMasterCrafterSetFavoritesDialog()
                 keybind = "DIALOG_PRIMARY",
                 text = GetString(SI_DIALOG_CONFIRM),
                 callback = function(dialog, data)
-                    doClearMasterCrafterSetFavoritesNow(dialog.data.customFavoriteId)
+                    local dialogData = dialog.data
+                    doClearMasterCrafterSetFavoritesNow(dialogData.customFavoriteId, dialogData.clearAllCategories)
                 end,
             },
 
@@ -146,13 +181,13 @@ local function initializeClearMasterCrafterSetFavoritesDialog()
     masterCrafterSetFavoritesClearDialogInitialized = true
 end
 
-local function changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, doAddOrDelete, clearAll)
+local function changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, doAddOrDelete, clearAll, clearAllCategories)
     local somethingDone = false
     local masterCrafterSetsFavorites = FCOCF.settingsVars.settings.masterCrafterSetsFavorites
     if masterCrafterSetsFavorites == nil then return end
 
-    if setId == nil and setData == nil and customFavoriteId ~= nil and doAddOrDelete == false and clearAll == true then
-        --Reset all favorites!
+    if setId == nil and setData == nil and customFavoriteId ~= nil and doAddOrDelete == false and clearAll == true and not clearAllCategories then
+        --Reset all favorites of the category!
         if masterCrafterSetsFavorites == nil or ZO_IsTableEmpty(masterCrafterSetsFavorites[customFavoriteId]) then return end
         --Add a dialog asking if this is really correct
         if masterCrafterSetFavoritesClearDialogInitialized == false then
@@ -160,6 +195,13 @@ local function changeMasterCrafterSetFavorites(setId, setData, customFavoriteId,
         end
         ZO_Dialogs_ShowPlatformDialog("FCOCF_MASTERCRAFTER_CLEAR_ALL_SET_FAV_DIALOG", { customFavoriteId = customFavoriteId })
         somethingDone = false
+    elseif setId == nil and setData == nil and customFavoriteId == nil and doAddOrDelete == false and clearAll == true and clearAllCategories == true then
+        --Reset all categories of favorites!
+        --Add a dialog asking if this is really correct
+        if masterCrafterSetFavoritesClearDialogInitialized == false then
+            initializeClearMasterCrafterSetFavoritesDialog()
+        end
+        ZO_Dialogs_ShowPlatformDialog("FCOCF_MASTERCRAFTER_CLEAR_ALL_SET_FAV_DIALOG", { customFavoriteId = nil, clearAllCategories = true })
     else
         if setId == nil or setId <= 0 then return end
         if doAddOrDelete == nil then return end
@@ -209,7 +251,14 @@ end
 
 function FCOCS_ConsolidatedSmithingSetFavoriteData:GetName()
     if self.isDivider then return dividerStr end
-    return getCustomSetFavoriteCategoryName(self:GetId(), self.isLibSets)
+    local customFavoriteId = self:GetId()
+    local setsSavedToThisCategory = NonContiguousCount(FCOCF.settingsVars.settings.masterCrafterSetsFavorites[customFavoriteId]) or ""
+    if setsSavedToThisCategory ~= "" and setsSavedToThisCategory > 0 then
+        setsSavedToThisCategory = " (" .. setsSavedToThisCategory .. ")"
+    else
+        setsSavedToThisCategory = ""
+    end
+    return getCustomSetFavoriteCategoryName(customFavoriteId, self.isLibSets) .. setsSavedToThisCategory
 end
 
 function FCOCS_ConsolidatedSmithingSetFavoriteData:GetKeyboardIcons()
@@ -355,9 +404,6 @@ end
 FCOCF.BuildCustomSetFavoriteCategoryNames = buildCustomSetFavoriteCategoryNames
 
 
-
-
-
 --======================================================================================================================
 
 function FCOCF.HookCrafting_MasterSetCrafterTables_Create()
@@ -430,7 +476,8 @@ function FCOCF.HookCrafting_MasterSetCrafterTables_Create()
 
                     if mouseButton == MOUSE_BUTTON_INDEX_RIGHT then
                         if setData:IsUnlocked() == true then
-                            ClearMenu()
+                            --ClearMenu()
+                            ClearCustomScrollableMenu()
 
                             local setId = setData:GetItemSetId()
                             --d(">setId: " .. tos(setId))
@@ -456,10 +503,12 @@ function FCOCF.HookCrafting_MasterSetCrafterTables_Create()
                             end
                             ]]
 
+                            local wasAddedToRemoveCount = 0
                             for customFavoriteId, isEnabled in pairs(customMasterCrafterSetStationFavoriteIds) do --Contains either FCOCF, FCOCF and LibSets or only LibSets favorites
                                 if isEnabled == true and masterCrafterSetsFavoritesEnabled[customFavoriteId] == true then
                                     if masterCrafterSetsFavorites[customFavoriteId] == nil then return end
-                                    local isSavedFavoritesEmpty = ZO_IsTableEmpty(masterCrafterSetsFavorites[customFavoriteId])
+                                    local savedFavoritesCount = NonContiguousCount(masterCrafterSetsFavorites[customFavoriteId])
+                                    local isSavedFavoritesEmpty = savedFavoritesCount <= 0
 
                                     --local isLibSetsFavorityCategory = customMasterCrafterSetStationFavoriteOfLibSets[customFavoriteId] or false
 
@@ -470,45 +519,32 @@ function FCOCF.HookCrafting_MasterSetCrafterTables_Create()
 
                                     local subMenuEntries = {}
 
-                                    if masterCrafterSetsFavorites[customFavoriteId][setId] == nil then
-                                        --[[
-                                        AddCustomScrollableMenuEntry("+" .. favIconStr .. GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. categoryStr, function()
-                                            changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, true)
-                                        end)
-                                        ]]
+                                    local isCurrentSetSavedInFavoriteCategory = masterCrafterSetsFavorites[customFavoriteId][setId] ~= nil
+                                    local isCurrentSetSavedInFavoriteCategoryTexture = ""
+                                    if not isCurrentSetSavedInFavoriteCategory then
                                         subMenuEntries[#subMenuEntries + 1] = {
-                                            name = "+" .. favoriteCategoryTexture .. categoryStr,
-                                            --label = "+" .. favoriteCategoryTexture,
-                                            tooltip = "+" .. favoriteCategoryTexture .. GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. categoryStr,
+                                            name = "|c00FF00+|r" .. favoriteCategoryTexture .. categoryStr,
+                                            tooltip = GetString(SI_COLLECTIBLE_ACTION_ADD_FAVORITE) .. categoryStr .. favoriteCategoryTexture,
                                             callback = function()
                                                 changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, true)
                                             end
                                         }
+                                        --isCurrentSetSavedInFavoriteCategoryTexture = notSavedInCategoryTexture
                                     else
-                                        --[[
-                                        contextMenuItemAddFunc("-" .. favIconStr .. GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE) .. categoryStr, function()
-                                            changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, false)
-                                        end)
-                                        ]]
                                         subMenuEntries[#subMenuEntries + 1] = {
-                                            name = "-" .. favoriteCategoryTexture .. categoryStr,
-                                            --label = "+" .. favoriteCategoryTexture,
-                                            tooltip = "-" .. favoriteCategoryTexture .. GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE) .. categoryStr,
+                                            name = "|cFF0000-|r" .. favoriteCategoryTexture .. categoryStr,
+                                            tooltip =  GetString(SI_COLLECTIBLE_ACTION_REMOVE_FAVORITE) .. categoryStr .. favoriteCategoryTexture,
                                             callback = function()
-                                                changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, true)
+                                                changeMasterCrafterSetFavorites(setId, setData, customFavoriteId, false)
                                             end
                                         }
+                                        isCurrentSetSavedInFavoriteCategoryTexture = savedInCategoryTextureText
+                                        wasAddedToRemoveCount = wasAddedToRemoveCount + 1
                                     end
                                     if not isSavedFavoritesEmpty then
-                                        --[[
-                                        contextMenuItemAddFunc(favIconStr .. "   |cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r" .. categoryStr, function()
-                                            changeMasterCrafterSetFavorites(nil, nil, customFavoriteId, false, true)
-                                        end)
-                                        ]]
                                         subMenuEntries[#subMenuEntries + 1] = {
-                                            name = favoriteCategoryTexture .. "   |cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r"  .. categoryStr,
-                                            --label = "+" .. favIconStr,
-                                            tooltip = favoriteCategoryTexture .. "   |cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r" .. categoryStr,
+                                            name = "|cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r"  .. categoryStr .. favoriteCategoryTexture,
+                                            tooltip = "|cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .. "|r" .. categoryStr .. favoriteCategoryTexture,
                                             callback = function()
                                                 changeMasterCrafterSetFavorites(nil, nil, customFavoriteId, false, true)
                                             end
@@ -516,11 +552,16 @@ function FCOCF.HookCrafting_MasterSetCrafterTables_Create()
                                     end
 
                                     if not ZO_IsTableEmpty(subMenuEntries) then
-                                        AddCustomScrollableSubMenuEntry(categoryName, subMenuEntries)
+                                        AddCustomScrollableSubMenuEntry(isSavedFavoritesEmpty and categoryName or categoryName .. " |c33FF00(#" .. savedFavoritesCount .. ")|r" .. isCurrentSetSavedInFavoriteCategoryTexture, subMenuEntries)
                                     end
                                 end
                             end
-                            ShowCustomScrollableMenu(ctrl, { sortEntries = true })
+                            if wasAddedToRemoveCount > 0 or not areMasterCrafterSetsFavoritesEmpty() then
+                                AddCustomScrollableMenuEntry(" - |cFF0000" .. GetString(SI_ATTRIBUTEPOINTALLOCATIONMODE_CLEARKEYBIND1) .." - |r", function()
+                                    changeMasterCrafterSetFavorites(nil, nil, nil, false, true, true)
+                                end)
+                            end
+                            ShowCustomScrollableMenu(ctrl, setFavoriteLSMOptions)
                         end
                     end
                 end
